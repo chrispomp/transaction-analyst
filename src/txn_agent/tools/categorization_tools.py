@@ -25,11 +25,11 @@ def run_categorization() -> str:
     rules_merge_query = """
     MERGE `fsi-banking-agentspace.txns.transactions` AS T
     USING (
-        SELECT rule_id, primary_category, secondary_category, merchant_name_cleaned_match
+        SELECT rule_id, primary_category, secondary_category, merchant_name_cleaned_match, transaction_type
         FROM `fsi-banking-agentspace.txns.rules`
         WHERE status = 'active'
     ) AS R
-    ON T.merchant_name_cleaned = R.merchant_name_cleaned_match
+    ON T.merchant_name_cleaned = R.merchant_name_cleaned_match AND T.transaction_type = R.transaction_type
     WHEN MATCHED AND T.primary_category IS NULL THEN
         UPDATE SET
             primary_category = R.primary_category,
@@ -169,6 +169,7 @@ def run_categorization() -> str:
         client.delete_table(temp_table_id, not_found_ok=True)
         logger.info(f"Cleaned up temporary table: {temp_table_id}")
 
+
 def learn_and_create_rules_from_llm_categorizations(client: bigquery.Client):
     """
     Analyzes LLM-categorized transactions and creates new rules for frequently seen merchants.
@@ -181,17 +182,19 @@ def learn_and_create_rules_from_llm_categorizations(client: bigquery.Client):
             merchant_name_cleaned,
             primary_category,
             secondary_category,
+            transaction_type,
             COUNT(*) AS transaction_count
         FROM `fsi-banking-agentspace.txns.transactions`
-        WHERE categorization_method = 'llm-powered'
-        GROUP BY 1, 2, 3
-        HAVING COUNT(*) > 3 
+        WHERE categorization_method = 'llm-powered' AND transaction_type IS NOT NULL
+        GROUP BY 1, 2, 3, 4
+        HAVING COUNT(*) > 3
     )
     SELECT * FROM LlmCategorizedMerchants
     WHERE NOT EXISTS (
         SELECT 1
         FROM `fsi-banking-agentspace.txns.rules` AS R
         WHERE R.merchant_name_cleaned_match = LlmCategorizedMerchants.merchant_name_cleaned
+        AND R.transaction_type = LlmCategorizedMerchants.transaction_type
     );
     """
     try:
@@ -207,7 +210,8 @@ def learn_and_create_rules_from_llm_categorizations(client: bigquery.Client):
             rules_manager_tools.create_rule(
                 primary_category=row['primary_category'],
                 secondary_category=row['secondary_category'],
-                merchant_match=row['merchant_name_cleaned']
+                merchant_match=row['merchant_name_cleaned'],
+                transaction_type=row['transaction_type']
             )
     except GoogleAPICallError as e:
         logger.error(f"🚨 BigQuery error when trying to learn from LLM categorizations: {e}")

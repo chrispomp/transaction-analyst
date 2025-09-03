@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 import logging
-import uuid  # Import the uuid library
+import uuid
 from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import bigquery
 from src.txn_agent.common.constants import VALID_CATEGORIES
@@ -11,7 +11,7 @@ import pandas as pd
 # Set up a logger for this module
 logger = logging.getLogger(__name__)
 
-def create_rule(primary_category: str, secondary_category: str, merchant_match: str, persona: str = 'general', confidence: float = 0.99) -> str:
+def create_rule(primary_category: str, secondary_category: str, merchant_match: str, transaction_type: str, persona: str = 'general', confidence: float = 0.99) -> str:
     """
     Creates a new categorization rule in the 'rules' table.
     Inputs are parameterized to prevent SQL injection.
@@ -21,13 +21,17 @@ def create_rule(primary_category: str, secondary_category: str, merchant_match: 
         logger.warning(f"Invalid category specified: {primary_category}/{secondary_category}")
         return f"⚠️ Invalid category specified. Please choose from the available categories."
 
+    if transaction_type not in ['DEBIT', 'CREDIT']:
+        logger.warning(f"Invalid transaction type: {transaction_type}")
+        return f"⚠️ Invalid transaction type specified. Must be 'DEBIT' or 'CREDIT'."
+
     client = bigquery.Client()
-    rule_id = str(uuid.uuid4())  # Generate a unique rule_id
+    rule_id = str(uuid.uuid4())
 
     query = """
     INSERT INTO `fsi-banking-agentspace.txns.rules`
-        (rule_id, primary_category, secondary_category, merchant_name_cleaned_match, persona_type, confidence_score, status)
-    VALUES (@rule_id, @primary_category, @secondary_category, @merchant_match, @persona, @confidence, 'active')
+        (rule_id, primary_category, secondary_category, merchant_name_cleaned_match, transaction_type, persona_type, confidence_score, status)
+    VALUES (@rule_id, @primary_category, @secondary_category, @merchant_match, @transaction_type, @persona, @confidence, 'active')
     """
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
@@ -35,6 +39,7 @@ def create_rule(primary_category: str, secondary_category: str, merchant_match: 
             bigquery.ScalarQueryParameter("primary_category", "STRING", primary_category),
             bigquery.ScalarQueryParameter("secondary_category", "STRING", secondary_category),
             bigquery.ScalarQueryParameter("merchant_match", "STRING", merchant_match),
+            bigquery.ScalarQueryParameter("transaction_type", "STRING", transaction_type),
             bigquery.ScalarQueryParameter("persona", "STRING", persona),
             bigquery.ScalarQueryParameter("confidence", "FLOAT", confidence),
         ]
@@ -86,10 +91,11 @@ def suggest_new_rules() -> str:
         merchant_name_cleaned,
         primary_category,
         secondary_category,
+        transaction_type,
         COUNT(*) AS transaction_count
     FROM `fsi-banking-agentspace.txns.transactions`
     WHERE categorization_method = 'llm-powered'
-    GROUP BY 1, 2, 3
+    GROUP BY 1, 2, 3, 4
     HAVING COUNT(*) > 5
     ORDER BY transaction_count DESC
     LIMIT 10;
@@ -101,12 +107,13 @@ def suggest_new_rules() -> str:
             return "👍 No new rule suggestions found at this time."
 
         suggestions_str = "Here are some new rule suggestions for your approval:\n\n"
-        suggestions_str += "| Merchant | Suggested Category | Based On |\n"
-        suggestions_str += "|---|---|---|\n"
+        suggestions_str += "| Merchant | Suggested Category | Transaction Type | Based On |\n"
+        suggestions_str += "|---|---|---|---|\n"
         for _, row in suggestions_df.iterrows():
             suggestions_str += (
                 f"| {row['merchant_name_cleaned']} | "
                 f"{row['primary_category']} / {row['secondary_category']} | "
+                f"{row['transaction_type']} |"
                 f"{row['transaction_count']} recent transactions |\n"
             )
 

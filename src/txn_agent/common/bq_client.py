@@ -1,3 +1,5 @@
+# src/txn_agent/common/bq_client.py
+
 from google.cloud import bigquery
 from google.cloud.exceptions import NotFound
 from google.adk.tools.bigquery import BigQueryToolset, BigQueryCredentialsConfig
@@ -55,6 +57,7 @@ def setup_bigquery_tables(bq_client):
         bigquery.SchemaField("primary_category", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("secondary_category", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("merchant_name_cleaned_match", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("transaction_type", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("persona_type", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("confidence_score", "FLOAT", mode="NULLABLE"),
         bigquery.SchemaField("status", "STRING", mode="NULLABLE"),
