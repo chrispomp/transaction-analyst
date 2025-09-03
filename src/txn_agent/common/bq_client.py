@@ -1,6 +1,5 @@
-from google.adk.tools.bigquery import (
-    BigQueryToolset, BigQueryToolConfig, WriteMode, BigQueryCredentialsConfig
-)
+from google.adk.tools.bigquery import BigQueryToolset, BigQueryCredentialsConfig
+from google.adk.tools.bigquery.config import BigQueryToolConfig, WriteMode
 import google.auth
 
 def get_bq_toolset(read_only: bool = False) -> BigQueryToolset:

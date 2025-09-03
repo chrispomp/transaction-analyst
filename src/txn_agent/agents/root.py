@@ -10,6 +10,7 @@ from .analyst import transaction_analyst
 from .admin import admin_agent
 
 root_agent = Agent(
+    name="root_agent",
     instruction="You are the orchestrator for a team of financial data agents. "
                 "Based on the user's request, delegate the task to the correct "
                 "specialist agent. Your available agents are: `cleanup_agent`, "
