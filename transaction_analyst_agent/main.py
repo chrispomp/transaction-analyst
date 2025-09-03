@@ -40,16 +40,20 @@ def deploy():
 
     # This function packages the agent, containerizes it, pushes it to
     # Google Artifact Registry, and provisions the serving infrastructure on Vertex AI.
-    engine = reasoning_engines.ReasoningEngine.create(
-        app,
+    remote_app = reasoning_engines.create(
+        agent_engine=app,
+        requirements=[
+            "google-cloud-aiplatform[adk,agent_engines]"
+        ],
         display_name=engine_display_name,
         location=location,
-        project=project_id,
+        project_id=project_id,
         staging_bucket=staging_bucket,
     )
 
-    print(f"Deployment successful! Reasoning Engine resource name: {engine.resource_name}")
-    return engine
+
+    print(f"Deployment successful! Reasoning Engine resource name: {remote_app.resource_name}")
+    return remote_app
 
 if __name__ == "__main__":
     # This block allows the script to be executed to trigger deployment.

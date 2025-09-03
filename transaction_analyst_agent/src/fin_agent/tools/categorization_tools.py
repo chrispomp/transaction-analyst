@@ -45,7 +45,7 @@ def run_categorization() -> str:
     if uncategorized_df.empty:
         return "Categorization complete. No new transactions required LLM categorization."
 
-    model = Gemini(model_name="gemini-2.5-flash")
+    model = Gemini(model="gemini-2.5-flash")
 
     prompt = """
     You are an expert financial transaction categorizer. Based on the provided
