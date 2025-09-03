@@ -11,8 +11,8 @@ def run_full_cleanup() -> str:
     standardize_query = """
     UPDATE `fsi-banking-agentspace.txns.transactions`
     SET
-        merchant_name_cleaned = UPPER(TRIM(REGEXP_REPLACE(merchant_name_raw, r'[^A-Z0-9\\s]', ''))),
-        description_cleaned = UPPER(TRIM(REGEXP_REPLACE(description_raw, r'[^A-Z0-9\\s]', '')))
+        merchant_name_cleaned = TRIM(REGEXP_REPLACE(UPPER(merchant_name_raw), r'[^A-Z0-9]+', ' ')),
+        description_cleaned = TRIM(REGEXP_REPLACE(UPPER(description_raw), r'[^A-Z0-9]+', ' '))
     WHERE merchant_name_cleaned IS NULL OR description_cleaned IS NULL;
     """
 
@@ -22,7 +22,7 @@ def run_full_cleanup() -> str:
         transaction_type = CASE
             WHEN amount < 0 THEN 'Debit'
             WHEN amount > 0 THEN 'Credit'
-            ELSE 'ZERO'
+            ELSE 'Zero'
         END
     WHERE transaction_type IS NULL OR
           (amount < 0 AND transaction_type != 'Debit') OR
