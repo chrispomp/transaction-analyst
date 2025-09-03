@@ -1,6 +1,6 @@
 from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
-from src.fin_agent.tools import categorization_tools
+from src.txn_agent.tools import categorization_tools
 
 categorization_agent = Agent(
     name="categorization_agent",
