@@ -30,12 +30,16 @@ def run_categorization() -> str:
             rule_id,
             primary_category,
             secondary_category,
-            merchant_name_cleaned_match,
+            identifier,
+            identifier_type,
             transaction_type
         FROM `fsi-banking-agentspace.txns.rules`
         WHERE status = 'active'
     ) AS R
-    ON T.merchant_name_cleaned = R.merchant_name_cleaned_match AND T.transaction_type = R.transaction_type
+    ON (
+        (R.identifier_type = 'merchant_name_cleaned' AND T.merchant_name_cleaned = R.identifier) OR
+        (R.identifier_type = 'description_cleaned' AND T.description_cleaned = R.identifier)
+    ) AND T.transaction_type = R.transaction_type
     WHEN MATCHED AND T.primary_category IS NULL THEN
         UPDATE SET
             primary_category = R.primary_category,
@@ -202,8 +206,9 @@ def learn_and_create_rules_from_llm_categorizations(client: bigquery.Client):
     WHERE NOT EXISTS (
         SELECT 1
         FROM `fsi-banking-agentspace.txns.rules` AS R
-        WHERE R.merchant_name_cleaned_match = LlmCategorizedMerchants.merchant_name_cleaned
+        WHERE R.identifier = LlmCategorizedMerchants.merchant_name_cleaned
         AND R.transaction_type = LlmCategorizedMerchants.transaction_type
+        AND R.identifier_type = 'merchant_name_cleaned'
     );
     """
     try:
@@ -219,7 +224,8 @@ def learn_and_create_rules_from_llm_categorizations(client: bigquery.Client):
             rules_manager_tools.create_rule(
                 primary_category=row['primary_category'],
                 secondary_category=row['secondary_category'],
-                merchant_match=row['merchant_name_cleaned'],
+                identifier=row['merchant_name_cleaned'],
+                identifier_type='merchant_name_cleaned',
                 transaction_type=row['transaction_type']
             )
     except GoogleAPICallError as e:

@@ -14,7 +14,6 @@ def get_bq_toolset(read_only: bool = False) -> BigQueryToolset:
     credentials, _ = google.auth.default()
     credentials_config = BigQueryCredentialsConfig(credentials=credentials)
 
-    # Create a BigQuery client to pass to the setup function
     bq_client = bigquery.Client(credentials=credentials)
     setup_bigquery_tables(bq_client) # Call the new function
 
@@ -42,8 +41,8 @@ def setup_bigquery_tables(bq_client):
         bigquery.SchemaField("is_recurring", "BOOLEAN", mode="NULLABLE"),
         bigquery.SchemaField("description_raw", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("description_cleaned", "STRING", mode="NULLABLE"),
-        bigquery.SchemaField("merchant_name_raw", "STRING", mode="NULLABLE"),
-        bigquery.SchemaField("merchant_name_cleaned", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("merchant_name_raw", "STRING", "NULLABLE"),
+        bigquery.SchemaField("merchant_name_cleaned", "STRING", "NULLABLE"),
         bigquery.SchemaField("primary_category", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("secondary_category", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("channel", "STRING", mode="NULLABLE"),
@@ -56,7 +55,8 @@ def setup_bigquery_tables(bq_client):
         bigquery.SchemaField("rule_id", "STRING", mode="REQUIRED"),
         bigquery.SchemaField("primary_category", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("secondary_category", "STRING", mode="NULLABLE"),
-        bigquery.SchemaField("merchant_name_cleaned_match", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("identifier", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("identifier_type", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("transaction_type", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("persona_type", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("confidence_score", "FLOAT", mode="NULLABLE"),
