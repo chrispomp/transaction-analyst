@@ -1,5 +1,6 @@
 google-adk
 google-cloud-bigquery
+google-cloud-bigquery-storage
 google-cloud-aiplatform
 google-auth
 pytest
