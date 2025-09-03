@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import logging
+import uuid  # Import the uuid library
 from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import bigquery
 from src.txn_agent.common.constants import VALID_CATEGORIES
@@ -21,13 +22,16 @@ def create_rule(primary_category: str, secondary_category: str, merchant_match: 
         return f"⚠️ Invalid category specified. Please choose from the available categories."
 
     client = bigquery.Client()
+    rule_id = str(uuid.uuid4())  # Generate a unique rule_id
+
     query = """
     INSERT INTO `fsi-banking-agentspace.txns.rules`
-        (primary_category, secondary_category, merchant_name_cleaned_match, persona_type, confidence_score, status)
-    VALUES (@primary_category, @secondary_category, @merchant_match, @persona, @confidence, 'active')
+        (rule_id, primary_category, secondary_category, merchant_name_cleaned_match, persona_type, confidence_score, status)
+    VALUES (@rule_id, @primary_category, @secondary_category, @merchant_match, @persona, @confidence, 'active')
     """
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
+            bigquery.ScalarQueryParameter("rule_id", "STRING", rule_id),
             bigquery.ScalarQueryParameter("primary_category", "STRING", primary_category),
             bigquery.ScalarQueryParameter("secondary_category", "STRING", secondary_category),
             bigquery.ScalarQueryParameter("merchant_match", "STRING", merchant_match),
@@ -37,7 +41,7 @@ def create_rule(primary_category: str, secondary_category: str, merchant_match: 
     )
     try:
         client.query(query, job_config=job_config).result()
-        logger.info(f"Successfully created rule for '{merchant_match}'.")
+        logger.info(f"Successfully created rule for '{merchant_match}' with rule_id: {rule_id}.")
         return f"✅ Successfully created a new rule for '{merchant_match}'."
     except GoogleAPICallError as e:
         logger.error(f"🚨 BigQuery error creating rule: {e}")
