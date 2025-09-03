@@ -1,9 +1,10 @@
 from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
-from src.txn_agent.tools import rules_manager_tools
+from src.fin_agent.tools import rules_manager_tools
 
 rules_manager = Agent(
     name="rules_manager",
+    model="gemini-2.5-flash",
     instruction="You manage categorization rules. You can create, update, and "
                 "deactivate rules. You can also analyze transaction data to "
                 "suggest new, high-confidence rules for the user to approve.",
