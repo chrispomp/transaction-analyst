@@ -7,7 +7,7 @@
 # .env
 
 # Python cache and compiled files
-__pycache__/
+*__pycache__/
 *.pyc
 
 # VS Code settings folder
