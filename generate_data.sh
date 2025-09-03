@@ -52,35 +52,35 @@ ACCOUNT_TYPES = ["Credit Card", "Checking Account", "Savings Account"]
 CHANNELS = ["ATM", "Point-of-Sale", "Card-Not-Present", "Wire Transfer", "ACH", "Check", "P2P", "Internal Transfer"]
 
 EXPENSE_TAXONOMY = [
-    {"category_l1": "Expense", "category_l2": "Groceries", "tier": "Premium", "merchant": "Whole Foods Market", "channel": "Point-of-Sale"},
-    {"category_l1": "Expense", "category_l2": "Groceries", "tier": "Mid-Range", "merchant": "Trader Joe's", "channel": "Point-of-Sale"},
-    {"category_l1": "Expense", "category_l2": "Food & Dining", "tier": "Premium", "merchant": "Blue Bottle Coffee", "channel": "Point-of-Sale"},
-    {"category_l1": "Expense", "category_l2": "Food & Dining", "tier": "Mid-Range", "merchant": "Chipotle", "channel": "Point-of-Sale"},
-    {"category_l1": "Expense", "category_l2": "Shopping", "tier": "Mid-Range", "merchant": "Amazon.com", "channel": "Card-Not-Present"},
-    {"category_l1": "Expense", "category_l2": "Shopping", "tier": "Premium", "merchant": "Lululemon", "channel": "Card-Not-Present"},
-    {"category_l1": "Expense", "category_l2": "Entertainment", "tier": "Mid-Range", "merchant": "Netflix.com", "channel": "Card-Not-Present"},
-    {"category_l1": "Expense", "category_l2": "Entertainment", "tier": "Mid-Range", "merchant": "Spotify", "channel": "Card-Not-Present"},
-    {"category_l1": "Expense", "category_l2": "Health & Wellness", "tier": "Mid-Range", "merchant": "CVS Pharmacy", "channel": "Point-of-Sale"},
-    {"category_l1": "Expense", "category_l2": "Health & Wellness", "tier": "Premium", "merchant": "SilverSneakers Fitness", "channel": "ACH"},
-    {"category_l1": "Expense", "category_l2": "Auto & Transport", "tier": "Mid-Range", "merchant": "Uber", "channel": "Card-Not-Present"},
-    {"category_l1": "Expense", "category_l2": "Travel & Vacation", "tier": "Mid-Range", "merchant": "Expedia", "channel": "Card-Not-Present"},
-    {"category_l1": "Expense", "category_l2": "Travel & Vacation", "tier": "Premium", "merchant": "Carnival Cruise Line", "channel": "Card-Not-Present"},
-    {"category_l1": "Expense", "category_l2": "Auto & Transport", "tier": "Mid-Range", "merchant": "Shell Gas Station", "channel": "Point-of-Sale"},
-    {"category_l1": "Expense", "category_l2": "Software & Tech", "tier": "Premium", "merchant": "ADOBE INC", "channel": "Card-Not-Present"},
-    {"category_l1": "Expense", "category_l2": "Shopping", "tier": "Mid-Range", "merchant": "Staples", "channel": "Point-of-Sale"},
-    {"category_l1": "Expense", "category_l2": "Shopping", "tier": "Mid-Range", "merchant": "Home Depot", "channel": "Point-of-Sale"},
-    {"category_l1": "Expense", "category_l2": "Education", "tier": "Premium", "merchant": "University Bookstore", "channel": "Point-of-Sale"},
-    {"category_l1": "Expense", "category_l2": "Medical", "tier": "Premium", "merchant": "City Hospital", "channel": "ACH"},
-    {"category_l1": "Expense", "category_l2": "Insurance", "tier": "Mid-Range", "merchant": "GEICO", "channel": "ACH"},
-    {"category_l1": "Expense", "category_l2": "Bills & Utilities", "tier": "Mid-Range", "merchant": "T-MOBILE", "channel": "ACH"},
-    {"category_l1": "Expense", "category_l2": "Fees & Charges", "tier": "Mid-Range", "merchant": "AARP", "channel": "ACH"},
+    {"primary_category": "Expense", "secondary_category": "Groceries", "tier": "Premium", "merchant": "Whole Foods Market", "channel": "Point-of-Sale"},
+    {"primary_category": "Expense", "secondary_category": "Groceries", "tier": "Mid-Range", "merchant": "Trader Joe's", "channel": "Point-of-Sale"},
+    {"primary_category": "Expense", "secondary_category": "Food & Dining", "tier": "Premium", "merchant": "Blue Bottle Coffee", "channel": "Point-of-Sale"},
+    {"primary_category": "Expense", "secondary_category": "Food & Dining", "tier": "Mid-Range", "merchant": "Chipotle", "channel": "Point-of-Sale"},
+    {"primary_category": "Expense", "secondary_category": "Shopping", "tier": "Mid-Range", "merchant": "Amazon.com", "channel": "Card-Not-Present"},
+    {"primary_category": "Expense", "secondary_category": "Shopping", "tier": "Premium", "merchant": "Lululemon", "channel": "Card-Not-Present"},
+    {"primary_category": "Expense", "secondary_category": "Entertainment", "tier": "Mid-Range", "merchant": "Netflix.com", "channel": "Card-Not-Present"},
+    {"primary_category": "Expense", "secondary_category": "Entertainment", "tier": "Mid-Range", "merchant": "Spotify", "channel": "Card-Not-Present"},
+    {"primary_category": "Expense", "secondary_category": "Health & Wellness", "tier": "Mid-Range", "merchant": "CVS Pharmacy", "channel": "Point-of-Sale"},
+    {"primary_category": "Expense", "secondary_category": "Health & Wellness", "tier": "Premium", "merchant": "SilverSneakers Fitness", "channel": "ACH"},
+    {"primary_category": "Expense", "secondary_category": "Auto & Transport", "tier": "Mid-Range", "merchant": "Uber", "channel": "Card-Not-Present"},
+    {"primary_category": "Expense", "secondary_category": "Travel & Vacation", "tier": "Mid-Range", "merchant": "Expedia", "channel": "Card-Not-Present"},
+    {"primary_category": "Expense", "secondary_category": "Travel & Vacation", "tier": "Premium", "merchant": "Carnival Cruise Line", "channel": "Card-Not-Present"},
+    {"primary_category": "Expense", "secondary_category": "Auto & Transport", "tier": "Mid-Range", "merchant": "Shell Gas Station", "channel": "Point-of-Sale"},
+    {"primary_category": "Expense", "secondary_category": "Software & Tech", "tier": "Premium", "merchant": "ADOBE INC", "channel": "Card-Not-Present"},
+    {"primary_category": "Expense", "secondary_category": "Shopping", "tier": "Mid-Range", "merchant": "Staples", "channel": "Point-of-Sale"},
+    {"primary_category": "Expense", "secondary_category": "Shopping", "tier": "Mid-Range", "merchant": "Home Depot", "channel": "Point-of-Sale"},
+    {"primary_category": "Expense", "secondary_category": "Education", "tier": "Premium", "merchant": "University Bookstore", "channel": "Point-of-Sale"},
+    {"primary_category": "Expense", "secondary_category": "Medical", "tier": "Premium", "merchant": "City Hospital", "channel": "ACH"},
+    {"primary_category": "Expense", "secondary_category": "Insurance", "tier": "Mid-Range", "merchant": "GEICO", "channel": "ACH"},
+    {"primary_category": "Expense", "secondary_category": "Bills & Utilities", "tier": "Mid-Range", "merchant": "T-MOBILE", "channel": "ACH"},
+    {"primary_category": "Expense", "secondary_category": "Fees & Charges", "tier": "Mid-Range", "merchant": "AARP", "channel": "ACH"},
 ]
 
 INCOME_CATEGORIES = [
-    {"category_l2": "Income", "description_template": "{merchant} DEPOSIT PMT_{id}"},
-    {"category_l2": "Interest Income", "description_template": "{bank} INTEREST PAYMENT"},
-    {"category_l2": "Refund", "description_template": "REFUND FROM {merchant}"},
-    {"category_l2": "Other Income", "description_template": "MISC CREDIT {origin}"},
+    {"secondary_category": "Income", "description_template": "{merchant} DEPOSIT PMT_{id}"},
+    {"secondary_category": "Interest Income", "description_template": "{bank} INTEREST PAYMENT"},
+    {"secondary_category": "Refund", "description_template": "REFUND FROM {merchant}"},
+    {"secondary_category": "Other Income", "description_template": "MISC CREDIT {origin}"},
 ]
 
 MERCHANT_TO_CHANNEL_MAP = {item['merchant']: item['channel'] for item in EXPENSE_TAXONOMY}
@@ -88,17 +88,17 @@ MERCHANT_TO_CHANNEL_MAP = {item['merchant']: item['channel'] for item in EXPENSE
 LIFE_EVENT_IMPACT_MATRIX = {
     "Unexpected Major Car Repair": {
         "category": "Negative Financial Shock", "magnitude_range": (-2500, -1000), "duration": 2,
-        "primary_signature": {"category_l2": "Auto & Transport", "merchant_options": ["Firestone Auto Care", "Pep Boys", "Local Mechanic LLC"]},
+        "primary_signature": {"secondary_category": "Auto & Transport", "merchant_options": ["Firestone Auto Care", "Pep Boys", "Local Mechanic LLC"]},
         "secondary_effects_prompt": "Reflect a period of reduced discretionary spending (less Food & Dining, Shopping, Entertainment) for the next 2 months to recover from the car repair cost."
     },
     "Significant Medical Bill": {
         "category": "Negative Financial Shock", "magnitude_range": (-3000, -500), "duration": 3,
-        "primary_signature": {"category_l2": "Medical", "merchant_options": ["Local Hospital Billing", "Specialist Co-Pay", "Out-of-Network Dr."]},
+        "primary_signature": {"secondary_category": "Medical", "merchant_options": ["Local Hospital Billing", "Specialist Co-Pay", "Out-of-Network Dr."]},
         "secondary_effects_prompt": "Significantly reduce non-essential spending for the next 3 months to accommodate this large, unexpected medical cost."
     },
     "Annual Work Bonus": {
         "category": "Positive Financial Shock", "magnitude_range": (2000, 5000), "duration": 2,
-        "primary_signature": {"category_l2": "Income", "merchant_options": ["ADP PAYROLL BONUS", "COMPANY BONUS DIRECT DEPOSIT"]},
+        "primary_signature": {"secondary_category": "Income", "merchant_options": ["ADP PAYROLL BONUS", "COMPANY BONUS DIRECT DEPOSIT"]},
         "secondary_effects_prompt": "Reflect a temporary increase in high-ticket or premium spending (e.g., Travel & Vacation, Shopping) for the next 2 months following the bonus."
     },
 }
@@ -111,8 +111,8 @@ PERSONAS = [
         "business_expense_categories": ["Auto & Transport"],
         "spending_tier_affinities": {"Budget": 0.5, "Mid-Range": 0.4, "Premium": 0.1},
         "recurring_expenses": [
-            {"merchant_name": "GEICO INSURANCE", "day_of_month": 1, "amount_mean": -180.50, "amount_std": 10.0, "category_l1": "Expense", "category_l2": "Insurance"},
-            {"merchant_name": "T-MOBILE", "day_of_month": 15, "amount_mean": -95.00, "amount_std": 5.0, "category_l1": "Expense", "category_l2": "Bills & Utilities"},
+            {"merchant_name": "GEICO INSURANCE", "day_of_month": 1, "amount_mean": -180.50, "amount_std": 10.0, "primary_category": "Expense", "secondary_category": "Insurance"},
+            {"merchant_name": "T-MOBILE", "day_of_month": 15, "amount_mean": -95.00, "amount_std": 5.0, "primary_category": "Expense", "secondary_category": "Bills & Utilities"},
         ]
     },
     {
@@ -122,7 +122,7 @@ PERSONAS = [
         "business_expense_categories": ["Software & Tech", "Shopping", "Bills & Utilities"],
         "spending_tier_affinities": {"Budget": 0.1, "Mid-Range": 0.4, "Premium": 0.5},
         "recurring_expenses": [
-            {"merchant_name": "ADOBE INC", "day_of_month": 5, "amount_mean": -59.99, "amount_std": 0, "category_l1": "Expense", "category_l2": "Software & Tech"},
+            {"merchant_name": "ADOBE INC", "day_of_month": 5, "amount_mean": -59.99, "amount_std": 0, "primary_category": "Expense", "secondary_category": "Software & Tech"},
         ]
     },
     {
@@ -132,8 +132,8 @@ PERSONAS = [
         "business_expense_categories": [],
         "spending_tier_affinities": {"Budget": 0.1, "Mid-Range": 0.3, "Premium": 0.6},
         "recurring_expenses": [
-            {"merchant_name": "NETFLIX.COM", "day_of_month": 10, "amount_mean": -15.49, "amount_std": 0, "category_l1": "Expense", "category_l2": "Entertainment"},
-            {"merchant_name": "LUXURY APTS RENT", "day_of_month": 1, "amount_mean": -2500.00, "amount_std": 0, "category_l1": "Expense", "category_l2": "Bills & Utilities"},
+            {"merchant_name": "NETFLIX.COM", "day_of_month": 10, "amount_mean": -15.49, "amount_std": 0, "primary_category": "Expense", "secondary_category": "Entertainment"},
+            {"merchant_name": "LUXURY APTS RENT", "day_of_month": 1, "amount_mean": -2500.00, "amount_std": 0, "primary_category": "Expense", "secondary_category": "Bills & Utilities"},
         ]
     },
     {
@@ -143,8 +143,8 @@ PERSONAS = [
         "business_expense_categories": ["Education"],
         "spending_tier_affinities": {"Budget": 0.7, "Mid-Range": 0.3, "Premium": 0.0},
         "recurring_expenses": [
-            {"merchant_name": "Spotify", "day_of_month": 20, "amount_mean": -10.99, "amount_std": 0, "category_l1": "Expense", "category_l2": "Entertainment"},
-            {"merchant_name": "CAMPUS HOUSING", "day_of_month": 1, "amount_mean": -850.00, "amount_std": 0, "category_l1": "Expense", "category_l2": "Bills & Utilities"},
+            {"merchant_name": "Spotify", "day_of_month": 20, "amount_mean": -10.99, "amount_std": 0, "primary_category": "Expense", "secondary_category": "Entertainment"},
+            {"merchant_name": "CAMPUS HOUSING", "day_of_month": 1, "amount_mean": -850.00, "amount_std": 0, "primary_category": "Expense", "secondary_category": "Bills & Utilities"},
         ]
     },
     {
@@ -154,8 +154,8 @@ PERSONAS = [
         "business_expense_categories": [],
         "spending_tier_affinities": {"Budget": 0.4, "Mid-Range": 0.5, "Premium": 0.1},
         "recurring_expenses": [
-            {"merchant_name": "SilverSneakers Fitness", "day_of_month": 5, "amount_mean": -25.00, "amount_std": 0, "category_l1": "Expense", "category_l2": "Health & Wellness"},
-            {"merchant_name": "AARP", "day_of_month": 12, "amount_mean": -16.00, "amount_std": 0, "category_l1": "Expense", "category_l2": "Fees & Charges"},
+            {"merchant_name": "SilverSneakers Fitness", "day_of_month": 5, "amount_mean": -25.00, "amount_std": 0, "primary_category": "Expense", "secondary_category": "Health & Wellness"},
+            {"merchant_name": "AARP", "day_of_month": 12, "amount_mean": -16.00, "amount_std": 0, "primary_category": "Expense", "secondary_category": "Fees & Charges"},
         ]
     },
 ]
@@ -177,8 +177,8 @@ AMOUNT_DISTRIBUTIONS = {
 WEEKDAY_HOUR_WEIGHTS = [1, 1, 1, 1, 1, 2, 5, 8, 9, 7, 5, 6, 10, 10, 8, 6, 7, 9, 9, 8, 6, 4, 3, 2]
 WEEKEND_HOUR_WEIGHTS = [2, 2, 1, 1, 1, 2, 3, 4, 6, 8, 10, 10, 9, 8, 7, 7, 8, 9, 9, 8, 6, 5, 4, 3]
 
-def generate_realistic_amount(category_l2: str) -> float:
-    params = AMOUNT_DISTRIBUTIONS.get(category_l2, AMOUNT_DISTRIBUTIONS["Default"])
+def generate_realistic_amount(secondary_category: str) -> float:
+    params = AMOUNT_DISTRIBUTIONS.get(secondary_category, AMOUNT_DISTRIBUTIONS["Default"])
     amount = np.random.lognormal(mean=params['log_mean'], sigma=params['log_std'])
     return round(amount, 2)
 
@@ -203,8 +203,8 @@ TRANSACTION_SCHEMA_FOR_LLM = {
             "description_raw": {"type": "string", "description": "The complete, raw transaction line item. MUST include extra details beyond just the merchant name, such as transaction prefixes (SQ*, TST*), store numbers, location, or reference codes."},
             "merchant_name_raw": {"type": "string", "description": "The raw merchant name as extracted from the description (e.g., 'SQ *BLUE BOTTLE COFFEE #B12')."},
             "merchant_name_cleaned": {"type": "string", "description": "The cleaned, canonical merchant name (e.g., 'Blue Bottle Coffee')."},
-            "category_l2": {"type": "string", "description": "The detailed sub-category of the transaction."}
-        }, "required": ["description_raw", "merchant_name_raw", "merchant_name_cleaned", "category_l2"]
+            "secondary_category": {"type": "string", "description": "The detailed sub-category of the transaction."}
+        }, "required": ["description_raw", "merchant_name_raw", "merchant_name_cleaned", "secondary_category"]
     }
 }
 
@@ -227,12 +227,12 @@ def build_monthly_prompt(profile: Dict, month_date: datetime, transactions_this_
     **High-Quality Output Examples (for style guidance only):**
     ```json
     [
-        {{"description_raw": "SQ *BLUE BOTTLE COFFEE #B12", "merchant_name_raw": "SQ *BLUE BOTTLE COFFEE", "merchant_name_cleaned": "Blue Bottle Coffee", "category_l2": "Food & Dining"}},
-        {{"description_raw": "POS DEBIT TRADER JOE'S #552 PHOENIX AZ", "merchant_name_raw": "TRADER JOE'S #552", "merchant_name_cleaned": "Trader Joe's", "category_l2": "Groceries"}},
-        {{"description_raw": "TST* The Corner Bistro", "merchant_name_raw": "TST* The Corner Bistro", "merchant_name_cleaned": "The Corner Bistro", "category_l2": "Food & Dining"}},
-        {{"description_raw": "AMAZON.COM*A12B34CD5 AMZN.COM/BILL WA", "merchant_name_raw": "AMAZON.COM*A12B34CD5", "merchant_name_cleaned": "Amazon.com", "category_l2": "Shopping"}},
-        {{"description_raw": "UBER TRIP 6J7K8L HELP.UBER.COM", "merchant_name_raw": "UBER TRIP", "merchant_name_cleaned": "Uber", "category_l2": "Auto & Transport"}},
-        {{"description_raw": "{income_merchant_example} DEPOSIT PMT_1234", "merchant_name_raw": "{income_merchant_example} DEPOSIT", "merchant_name_cleaned": "{income_merchant_example}", "category_l2": "Income"}}
+        {{"description_raw": "SQ *BLUE BOTTLE COFFEE #B12", "merchant_name_raw": "SQ *BLUE BOTTLE COFFEE", "merchant_name_cleaned": "Blue Bottle Coffee", "secondary_category": "Food & Dining"}},
+        {{"description_raw": "POS DEBIT TRADER JOE'S #552 PHOENIX AZ", "merchant_name_raw": "TRADER JOE'S #552", "merchant_name_cleaned": "Trader Joe's", "secondary_category": "Groceries"}},
+        {{"description_raw": "TST* The Corner Bistro", "merchant_name_raw": "TST* The Corner Bistro", "merchant_name_cleaned": "The Corner Bistro", "secondary_category": "Food & Dining"}},
+        {{"description_raw": "AMAZON.COM*A12B34CD5 AMZN.COM/BILL WA", "merchant_name_raw": "AMAZON.COM*A12B34CD5", "merchant_name_cleaned": "Amazon.com", "secondary_category": "Shopping"}},
+        {{"description_raw": "UBER TRIP 6J7K8L HELP.UBER.COM", "merchant_name_raw": "UBER TRIP", "merchant_name_cleaned": "Uber", "secondary_category": "Auto & Transport"}},
+        {{"description_raw": "{income_merchant_example} DEPOSIT PMT_1234", "merchant_name_raw": "{income_merchant_example} DEPOSIT", "merchant_name_cleaned": "{income_merchant_example}", "secondary_category": "Income"}}
     ]
     ```
     """
@@ -246,7 +246,7 @@ def build_monthly_prompt(profile: Dict, month_date: datetime, transactions_this_
     1.  **Differentiate Descriptions:** The `description_raw` MUST be more detailed than `merchant_name_raw`. It should contain the merchant name plus other realistic data like store numbers, transaction type prefixes (e.g. 'SQ *', 'POS DEBIT'), locations, or reference IDs.
     2.  The `merchant_name_raw` MUST be a logical, consistent part of the `description_raw`.
     3.  The `merchant_name_cleaned` MUST be the canonical, recognizable name of the business.
-    4.  For income, use `category_l2`: "Income", "Refund", or "Other Income".
+    4.  For income, use `secondary_category`: "Income", "Refund", or "Other Income".
     5.  Do NOT generate predictable monthly bills; they are handled separately.
     6.  The entire output MUST be ONLY the raw JSON array, conforming strictly to the provided schema. Ensure all strings are properly escaped.
     {few_shot_examples}
@@ -281,8 +281,8 @@ TRANSACTIONS_SCHEMA = [
     bigquery.SchemaField("description_cleaned", "STRING", mode="NULLABLE", description="A standardized and cleaned version of the raw description (lowercase, no special characters)."),
     bigquery.SchemaField("merchant_name_raw", "STRING", mode="NULLABLE", description="The raw, potentially messy merchant name as it might appear on a statement."),
     bigquery.SchemaField("merchant_name_cleaned", "STRING", mode="NULLABLE", description="The cleaned, canonical name of the merchant for analytics."),
-    bigquery.SchemaField("category_l1", "STRING", mode="NULLABLE", description="The high-level category: 'Income', 'Expense', or 'Transfer'."),
-    bigquery.SchemaField("category_l2", "STRING", mode="NULLABLE", description="The detailed sub-category (e.g., 'Groceries', 'Software & Tech', 'Interest Income')."),
+    bigquery.SchemaField("primary_category", "STRING", mode="NULLABLE", description="The high-level category: 'Income', 'Expense', or 'Transfer'."),
+    bigquery.SchemaField("secondary_category", "STRING", mode="NULLABLE", description="The detailed sub-category (e.g., 'Groceries', 'Software & Tech', 'Interest Income')."),
     bigquery.SchemaField("channel", "STRING", mode="NULLABLE", description="The method or channel of the transaction (e.g., 'Point-of-Sale', 'ACH')."),
     bigquery.SchemaField("categorization_update_timestamp", "TIMESTAMP", mode="NULLABLE", description="The timestamp when the transaction's categorization was last updated."),
     bigquery.SchemaField("categorization_method", "STRING", mode="NULLABLE", description="The method for which the transaction's categorization was updated."),
@@ -407,7 +407,7 @@ def inject_recurring_transactions(profile: Dict, history_months: int) -> List[Di
                 "transaction_date": date.isoformat(), "transaction_type": "Debit", "amount": amount, "is_recurring": True,
                 "description_raw": raw_desc, "description_cleaned": clean_description(raw_desc),
                 "merchant_name_raw": bill['merchant_name'], "merchant_name_cleaned": bill['merchant_name'],
-                "category_l1": bill['category_l1'], "category_l2": bill['category_l2'], "channel": "ACH",
+                "primary_category": bill['primary_category'], "secondary_category": bill['secondary_category'], "channel": "ACH",
                 "categorization_update_timestamp": datetime.now(timezone.utc).isoformat(),
             })
     return txns
@@ -432,7 +432,7 @@ def inject_programmatic_event_transactions(profile: Dict, life_events: List[Dict
             "transaction_type": "Credit" if is_credit else "Debit", "amount": amount, "is_recurring": False,
             "description_raw": raw_desc, "description_cleaned": clean_description(raw_desc),
             "merchant_name_raw": merchant, "merchant_name_cleaned": merchant,
-            "category_l1": "Income" if is_credit else "Expense", "category_l2": sig['category_l2'], "channel": channel,
+            "primary_category": "Income" if is_credit else "Expense", "secondary_category": sig['secondary_category'], "channel": channel,
             "categorization_update_timestamp": datetime.now(timezone.utc).isoformat(),
         })
     return txns
@@ -443,9 +443,9 @@ async def generate_cohesive_txns_for_consumer(profile: Dict, history_months: int
     final_txns = inject_recurring_transactions(profile, history_months)
     final_txns.extend(inject_programmatic_event_transactions(profile, life_events))
     
-    cat_lookup = {item['category_l2']: "Expense" for item in EXPENSE_TAXONOMY}
+    cat_lookup = {item['secondary_category']: "Expense" for item in EXPENSE_TAXONOMY}
     for inc_cat in INCOME_CATEGORIES:
-        cat_lookup[inc_cat['category_l2']] = "Income"
+        cat_lookup[inc_cat['secondary_category']] = "Income"
     cat_lookup.update({"Peer to Peer Transfer": "Transfer"})
 
     for i in range(history_months):
@@ -459,7 +459,7 @@ async def generate_cohesive_txns_for_consumer(profile: Dict, history_months: int
         for txn in monthly_txns_from_llm:
             try:
                 # Get initial data from the LLM response
-                cat_l2 = txn['category_l2']
+                cat_l2 = txn['secondary_category']
                 merchant_raw = txn['merchant_name_raw']
                 merchant_cleaned = txn['merchant_name_cleaned']
                 
@@ -501,7 +501,7 @@ async def generate_cohesive_txns_for_consumer(profile: Dict, history_months: int
                     "description_cleaned": clean_description(txn.get('description_raw')),
                     "merchant_name_raw": merchant_raw,
                     "merchant_name_cleaned": merchant_cleaned,
-                    "category_l1": cat_lookup.get(cat_l2, "Expense"),
+                    "primary_category": cat_lookup.get(cat_l2, "Expense"),
                     "channel": channel,
                     "categorization_update_timestamp": datetime.now(timezone.utc).isoformat(),
                 })
