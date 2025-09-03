@@ -33,12 +33,12 @@ def run_full_cleanup() -> str:
     """
 
     try:
-        # Note: The ADK's BigQueryToolset.execute_query does not return the
+        # Note: The ADK's BigQueryToolset.execute_sql does not return the
         # number of rows modified by DML statements. A more advanced implementation
         # might use the google-cloud-bigquery client library directly to get
         # job statistics for a more detailed summary.
-        bq_toolset.execute_query(query=standardize_query)
-        bq_toolset.execute_query(query=correct_type_query)
+        bq_toolset.execute_sql(query=standardize_query)
+        bq_toolset.execute_sql(query=correct_type_query)
 
         return "Cleanup successful. Text fields were standardized and transaction types were corrected."
     except Exception as e:

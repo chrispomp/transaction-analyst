@@ -26,7 +26,7 @@ def run_categorization() -> str:
             rule_id = R.rule_id
     """
     try:
-        bq_toolset.execute_query(query=rules_merge_query)
+        bq_toolset.execute_sql(query=rules_merge_query)
     except Exception as e:
         return f"An error occurred during rule-based categorization: {e}"
 
@@ -38,7 +38,7 @@ def run_categorization() -> str:
     LIMIT 100; -- Process in batches to manage LLM call size
     """
     try:
-        uncategorized_df = bq_toolset.execute_query(query=select_uncategorized_query)
+        uncategorized_df = bq_toolset.execute_sql(query=select_uncategorized_query)
     except Exception as e:
         return f"Failed to retrieve uncategorized transactions: {e}"
 
@@ -99,7 +99,7 @@ def run_categorization() -> str:
     """
 
     try:
-        bq_toolset.execute_query(query=llm_merge_query)
+        bq_toolset.execute_sql(query=llm_merge_query)
         return f"Categorization complete. Rules applied and {len(categorized_data)} transactions were categorized by the LLM."
     except Exception as e:
         return f"An error occurred during LLM-based categorization: {e}"

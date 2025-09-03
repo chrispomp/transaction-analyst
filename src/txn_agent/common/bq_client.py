@@ -1,3 +1,5 @@
+from google.cloud import bigquery
+from google.cloud.exceptions import NotFound
 from google.adk.tools.bigquery import BigQueryToolset, BigQueryCredentialsConfig
 from google.adk.tools.bigquery.config import BigQueryToolConfig, WriteMode
 import google.auth
@@ -9,6 +11,10 @@ def get_bq_toolset(read_only: bool = False) -> BigQueryToolset:
 
     credentials, _ = google.auth.default()
     credentials_config = BigQueryCredentialsConfig(credentials=credentials)
+
+    # Create a BigQuery client to pass to the setup function
+    bq_client = bigquery.Client(credentials=credentials)
+    setup_bigquery_tables(bq_client) # Call the new function
 
     return BigQueryToolset(
         bigquery_tool_config=tool_config,
@@ -23,13 +29,37 @@ def setup_bigquery_tables(bq_client):
 
     transactions_schema = [
         bigquery.SchemaField("transaction_id", "STRING", mode="REQUIRED"),
-        # ... (rest of the schema)
+        bigquery.SchemaField("account_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("consumer_name", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("persona_type", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("institution_name", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("account_type", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("transaction_date", "TIMESTAMP", mode="NULLABLE"),
+        bigquery.SchemaField("transaction_type", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("amount", "FLOAT", mode="NULLABLE"),
+        bigquery.SchemaField("is_recurring", "BOOLEAN", mode="NULLABLE"),
+        bigquery.SchemaField("description_raw", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("description_cleaned", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("merchant_name_raw", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("merchant_name_cleaned", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("primary_category", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("secondary_category", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("channel", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("categorization_update_timestamp", "TIMESTAMP", mode="NULLABLE"),
+        bigquery.SchemaField("categorization_method", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("rule_id", "STRING", mode="NULLABLE")
     ]
 
     rules_schema = [
         bigquery.SchemaField("rule_id", "INT64", mode="REQUIRED"),
-        # ... (rest of the schema)
+        bigquery.SchemaField("primary_category", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("secondary_category", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("merchant_name_cleaned_match", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("persona_type", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("confidence_score", "FLOAT", mode="NULLABLE"),
+        bigquery.SchemaField("status", "STRING", mode="NULLABLE"),
     ]
+
 
     try:
         bq_client.get_table(transactions_table_id)
@@ -42,11 +72,3 @@ def setup_bigquery_tables(bq_client):
     except NotFound:
         table = bigquery.Table(rules_table_id, schema=rules_schema)
         bq_client.create_table(table)
-
-def get_bq_toolset(read_only: bool = False) -> BigQueryToolset:
-    """Creates a configured BigQueryToolset."""
-    # ... (rest of the function)
-    setup_bigquery_tables(bq_client) # Call the new function
-    return BigQueryToolset(
-        # ...
-    )

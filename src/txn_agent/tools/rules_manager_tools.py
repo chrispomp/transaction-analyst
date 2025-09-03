@@ -21,7 +21,7 @@ def create_rule(primary_category: str, secondary_category: str, merchant_match: 
         "confidence": confidence
     }
     try:
-        bq_toolset.execute_query(query, query_parameters=params)
+        bq_toolset.execute_sql(query, query_parameters=params)
         return "Successfully created new rule."
     except Exception as e:
         return f"Error creating rule: {e}"
@@ -39,7 +39,7 @@ def update_rule_status(rule_id: int, status: str) -> str:
     """
     params = {"status": status, "rule_id": rule_id}
     try:
-        bq_toolset.execute_query(query, query_parameters=params)
+        bq_toolset.execute_sql(query, query_parameters=params)
         return f"Successfully updated rule {rule_id} to {status}."
     except Exception as e:
         return f"Error updating rule: {e}"
@@ -64,7 +64,7 @@ def suggest_new_rules() -> str:
     LIMIT 10;
     """
     try:
-        suggestions_df = bq_toolset.execute_query(query)
+        suggestions_df = bq_toolset.execute_sql(query)
         if suggestions_df.empty:
             return "No new rule suggestions found at this time."
 

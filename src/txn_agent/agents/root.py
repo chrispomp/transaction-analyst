@@ -1,3 +1,14 @@
+from google.adk.agents import Agent
+from google.adk.tools import AgentTool
+
+# Import all the specialized sub-agent instances that the root agent will orchestrate.
+from .cleanup import cleanup_agent
+from .categorization import categorization_agent
+from .rules_manager import rules_manager
+from .audit import audit_agent
+from .analyst import transaction_analyst
+from .admin import admin_agent
+
 root_agent = Agent(
     name="root_agent",
     model="gemini-2.5-flash",
