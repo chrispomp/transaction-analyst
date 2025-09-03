@@ -64,36 +64,82 @@ def run_categorization() -> str:
     logger.info(f"Found {len(uncategorized_df)} transactions to categorize with the LLM.")
     model = GenerativeModel("gemini-2.5-flash")
 
+    # --- START: Enhanced Prompt ---
     prompt = f"""
-    You are an expert financial transaction categorizer. Based on the provided
-    JSON data of transactions, determine the correct `primary_category` and
-    `secondary_category` for each.
+    You are an expert financial transaction categorizer. Your task is to categorize the transactions in the following JSON data.
 
-    Please use only the following valid categories:
+    **Instructions:**
+    1.  For each transaction object, determine the correct `primary_category` and `secondary_category`.
+    2.  You **MUST** use only the categories provided in the "Valid Categories" section below.
+    3.  Your final output **MUST** be a valid JSON array of objects.
+    4.  Each object in the array **MUST** contain three keys: `transaction_id`, `primary_category`, and `secondary_category`.
+
+    **Valid Categories:**
+    ```json
     {json.dumps(VALID_CATEGORIES, indent=4)}
+    ```
 
-    Return the output as a valid JSON array of objects,
-    where each object contains the `transaction_id`, `primary_category`, and `secondary_category`.
+    **Example Output Format:**
+    ```json
+    [
+      {{
+        "transaction_id": "TXN-EXAMPLE-123",
+        "primary_category": "Expense",
+        "secondary_category": "Groceries"
+      }},
+      {{
+        "transaction_id": "TXN-EXAMPLE-456",
+        "primary_category": "Income",
+        "secondary_category": "Payroll"
+      }}
+    ]
+    ```
 
-    Transactions to categorize:
+    **Transactions to Categorize:**
+    ```json
     {uncategorized_df.to_json(orient='records')}
+    ```
     """
+    # --- END: Enhanced Prompt ---
+
 
     response_text = ""
+    categorized_data = []
     try:
         logger.info("Sending batch to Gemini for categorization...")
         response = model.generate_content(prompt)
         response_text = response.text
         cleaned_response = response_text.strip().replace('```json', '').replace('```', '').strip()
-        categorized_data = json.loads(cleaned_response)
-        logger.info(f"Received {len(categorized_data)} categorizations from LLM.")
+        
+        # --- Validation Logic ---
+        parsed_json = json.loads(cleaned_response)
+
+        if not isinstance(parsed_json, list):
+            logger.warning(f"LLM response was not a list, but a {type(parsed_json)}. Wrapping in a list.")
+            parsed_json = [parsed_json]
+        
+        for item in parsed_json:
+            if (isinstance(item, dict) and
+                    'transaction_id' in item and
+                    'primary_category' in item and
+                    'secondary_category' in item and
+                    isinstance(item.get('transaction_id'), str) and
+                    isinstance(item.get('primary_category'), str) and
+                    isinstance(item.get('secondary_category'), str)):
+                categorized_data.append(item)
+            else:
+                logger.warning(f"Skipping invalid record from LLM: {item}")
+        # --- End Validation Logic ---
+
+        logger.info(f"Received and validated {len(categorized_data)} categorizations from LLM.")
+
     except (json.JSONDecodeError, AttributeError, Exception) as e:
-        logger.error(f"🚨 Failed to parse LLM response: {e}. Raw response: {response_text}")
-        return f"🚨 Failed to parse LLM response: {e}. Response was: {response_text}"
+        logger.error(f"🚨 Failed to parse or validate LLM response: {e}. Raw response: {response_text}")
+        return f"🚨 Failed to parse or validate LLM response: {e}. Response was: {response_text}"
 
     if not categorized_data:
-        logger.warning("LLM categorization ran, but no new category suggestions were produced.")
-        return "🤔 LLM categorization ran, but no new category suggestions were produced."
+        logger.warning("LLM categorization ran, but no new valid category suggestions were produced.")
+        return "🤔 LLM categorization ran, but no new valid category suggestions were produced."
 
     # Stage 3: Update BigQuery with a secure, parameterized query
     logger.info("Stage 3: Applying LLM-based categorizations to BigQuery.")
