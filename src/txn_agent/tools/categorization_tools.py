@@ -68,7 +68,8 @@ def run_categorization() -> str:
     """
     transactions_to_categorize = uncategorized_df[['transaction_id', 'description_cleaned', 'merchant_name_cleaned']].to_dict('records')
     prompt += json.dumps(transactions_to_categorize)
-
+    
+    response_text = ""
     try:
         response_text = model.predict(prompt).text
         cleaned_response = response_text.strip().replace('```json', '').replace('```', '').strip()
