@@ -1,4 +1,5 @@
-from google.adk.agents import Agent, AgentTool
+from google.adk.agents import Agent
+from google.adk.tools import AgentTool
 
 # Import all the specialized sub-agent instances that the root agent will orchestrate.
 from .cleanup import cleanup_agent
