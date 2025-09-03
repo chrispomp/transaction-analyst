@@ -11,7 +11,7 @@ def run_full_cleanup() -> str:
     # This query standardizes text fields by converting them to uppercase,
     # trimming whitespace, and removing special characters.
     standardize_query = """
-    UPDATE `gcp-project.fin_data.transactions`
+    UPDATE `fsi-banking-agentspace.txns.transactions`
     SET
         merchant_name_cleaned = UPPER(TRIM(REGEXP_REPLACE(merchant_name, r'[^A-Z0-9\\s]', ''))),
         description_cleaned = UPPER(TRIM(REGEXP_REPLACE(description, r'[^A-Z0-9\\s]', '')))
@@ -20,7 +20,7 @@ def run_full_cleanup() -> str:
 
     # This query corrects the transaction_type based on the transaction amount.
     correct_type_query = """
-    UPDATE `gcp-project.fin_data.transactions`
+    UPDATE `fsi-banking-agentspace.txns.transactions`
     SET
         transaction_type = CASE
             WHEN amount < 0 THEN 'DEBIT'

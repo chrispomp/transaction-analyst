@@ -7,7 +7,7 @@ def reset_all_transactions() -> str:
     """
     bq_toolset = get_bq_toolset()
     query = """
-    UPDATE `gcp-project.fin_data.transactions`
+    UPDATE `fsi-banking-agentspace.txns.transactions`
     SET
         merchant_name_cleaned = NULL,
         description_cleaned = NULL,

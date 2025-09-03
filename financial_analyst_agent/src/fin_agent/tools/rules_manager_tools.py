@@ -9,7 +9,7 @@ def create_rule(primary_category: str, secondary_category: str, merchant_match: 
     # Using parameterized queries is a security best practice.
     # The ADK BigQueryToolset supports this via the query_parameters argument.
     query = """
-    INSERT INTO `gcp-project.fin_data.rules`
+    INSERT INTO `fsi-banking-agentspace.txns.rules`
         (primary_category, secondary_category, merchant_name_cleaned_match, persona_type, confidence_score, status)
     VALUES (@primary_category, @secondary_category, @merchant_match, @persona, @confidence, 'active')
     """
@@ -33,7 +33,7 @@ def update_rule_status(rule_id: int, status: str) -> str:
 
     bq_toolset = get_bq_toolset()
     query = """
-    UPDATE `gcp-project.fin_data.rules`
+    UPDATE `fsi-banking-agentspace.txns.rules`
     SET status = @status
     WHERE rule_id = @rule_id
     """
@@ -56,7 +56,7 @@ def suggest_new_rules() -> str:
         primary_category,
         secondary_category,
         COUNT(*) AS transaction_count
-    FROM `gcp-project.fin_data.transactions`
+    FROM `fsi-banking-agentspace.txns.transactions`
     WHERE category_method = 'llm-powered'
     GROUP BY 1, 2, 3
     HAVING COUNT(*) > 5 -- Suggest rules for merchants appearing frequently

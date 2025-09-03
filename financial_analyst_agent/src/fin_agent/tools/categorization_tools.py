@@ -11,10 +11,10 @@ def run_categorization() -> str:
     # Stage 1: Apply existing rules using a MERGE statement.
     # This is more efficient than a simple UPDATE as it can handle more complex logic.
     rules_merge_query = """
-    MERGE `gcp-project.fin_data.transactions` AS T
+    MERGE `fsi-banking-agentspace.txns.transactions` AS T
     USING (
         SELECT rule_id, primary_category, secondary_category, merchant_name_cleaned_match
-        FROM `gcp-project.fin_data.rules`
+        FROM `fsi-banking-agentspace.txns.rules`
         WHERE status = 'active'
     ) AS R
     ON T.merchant_name_cleaned = R.merchant_name_cleaned_match
@@ -33,7 +33,7 @@ def run_categorization() -> str:
     # Stage 2: Use an LLM for remaining uncategorized transactions.
     select_uncategorized_query = """
     SELECT transaction_id, description_cleaned, merchant_name_cleaned
-    FROM `gcp-project.fin_data.transactions`
+    FROM `fsi-banking-agentspace.txns.transactions`
     WHERE primary_category IS NULL
     LIMIT 100; -- Process in batches to manage LLM call size
     """
@@ -83,7 +83,7 @@ def run_categorization() -> str:
     ])
 
     llm_merge_query = f"""
-    MERGE `gcp-project.fin_data.transactions` AS T
+    MERGE `fsi-banking-agentspace.txns.transactions` AS T
     USING (
         SELECT * FROM UNNEST([
             STRUCT<transaction_id STRING, primary_category STRING, secondary_category STRING>
