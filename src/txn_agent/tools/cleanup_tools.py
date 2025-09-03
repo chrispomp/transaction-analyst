@@ -22,7 +22,7 @@ def run_full_cleanup() -> str:
         transaction_type = CASE
             WHEN amount < 0 THEN 'Debit'
             WHEN amount > 0 THEN 'Credit'
-            ELSE 'Zero'
+            ELSE 'ZERO'
         END
     WHERE transaction_type IS NULL OR
           (amount < 0 AND transaction_type != 'Debit') OR
@@ -33,6 +33,6 @@ def run_full_cleanup() -> str:
         client.query(standardize_query).result()
         client.query(correct_type_query).result()
 
-        return "✅ Cleanup successful. Text fields were standardized and transaction types were corrected."
+        return "✅ **Cleanup Successful!** Text fields were standardized and transaction types were corrected."
     except Exception as e:
-        return f"🚨 An error occurred during data cleanup: {e}"
+        return f"🚨 **An error occurred during data cleanup:** {e}"

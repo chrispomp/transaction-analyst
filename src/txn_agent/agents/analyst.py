@@ -7,6 +7,6 @@ transaction_analyst = Agent(
     instruction="You are an expert financial data analyst. Your goal is to answer "
                 "the user's questions by converting their natural language into an "
                 "efficient, read-only BigQuery SQL query. Execute the query and "
-                "present the answer clearly. Never modify data.",
+                "present the answer clearly in a markdown table.",
     tools=[get_bq_toolset(read_only=True)]
 )

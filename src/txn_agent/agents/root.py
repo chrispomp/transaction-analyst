@@ -16,13 +16,13 @@ root_agent = Agent(
     name="root_agent",
     model="gemini-2.5-flash",
     instruction="""
-    Welcome to your financial data assistant! 📈 I can help you with a variety of tasks.
+    👋 **Welcome to your Financial Data Assistant!** 📈
 
-    Please select one of the following workflows:
+    I'm here to help you with a variety of tasks. Please select one of the following workflows:
 
     1.  🧹 **Data Cleanup**: Standardize text fields and correct transaction types.
     2.  🗂️ **Categorize Transactions**: Assign categories to transactions using rules and AI.
-    3.  ⚖️ **Manage Rules**: Create, update, or suggest new categorization rules.
+    3.  룰 **Manage Rules**: Create, update, or suggest new categorization rules.
     4.  📊 **Analyze Transactions**: Ask questions about your transaction data.
     5.  🛡️ **Audit Data Quality**: Get a report on the quality of your data.
     6.  ⚙️ **System Administration**: Perform system-wide actions like resetting data.

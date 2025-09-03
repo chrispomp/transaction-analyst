@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import logging
 import uuid
+import re
 from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import bigquery
 from vertexai.generative_models import GenerativeModel
@@ -14,6 +15,16 @@ from src.txn_agent.common.cancellation import cancellation_token
 # Set up a logger for this module
 logger = logging.getLogger(__name__)
 
+def _fix_json_array(json_string: str) -> str:
+    """
+    Attempts to fix a malformed JSON array string by adding missing commas
+    between objects.
+    """
+    # This regex looks for a closing brace immediately followed by an opening brace,
+    # with optional whitespace in between. This is a common indicator of a missing comma.
+    fixed_json_string = re.sub(r'}\s*{', '},{', json_string)
+    return fixed_json_string
+
 def run_categorization() -> str:
     """
     Categorizes transactions using a hybrid rules-based and LLM-powered approach.
@@ -22,6 +33,13 @@ def run_categorization() -> str:
     logger.info("Starting categorization process...")
     client = bigquery.Client()
     total_updated_count = 0
+    
+    analytics = {
+        "rule_based_count": 0,
+        "llm_based_count": 0,
+        "total_categorized": 0,
+        "category_distribution": {}
+    }
 
     # Stage 1: Apply existing rules
     logger.info("Stage 1: Applying rules-based categorization.")
@@ -29,20 +47,21 @@ def run_categorization() -> str:
     MERGE `fsi-banking-agentspace.txns.transactions` AS T
     USING (
         SELECT
-            rule_id,
-            primary_category,
-            secondary_category,
-            identifier,
-            identifier_type,
-            transaction_type
-        FROM `fsi-banking-agentspace.txns.rules`
-        WHERE status = 'active'
+            t.transaction_id,
+            r.rule_id,
+            r.primary_category,
+            r.secondary_category
+        FROM `fsi-banking-agentspace.txns.transactions` AS t
+        JOIN `fsi-banking-agentspace.txns.rules` AS r
+        ON (
+            (r.identifier_type = 'merchant_name_cleaned' AND t.merchant_name_cleaned LIKE '%' || r.identifier || '%') OR
+            (r.identifier_type = 'description_cleaned' AND t.description_cleaned LIKE '%' || r.identifier || '%')
+        ) AND t.transaction_type = r.transaction_type
+        WHERE t.primary_category IS NULL AND r.status = 'active'
+        QUALIFY ROW_NUMBER() OVER(PARTITION BY t.transaction_id ORDER BY LENGTH(r.identifier) DESC) = 1
     ) AS R
-    ON (
-        (R.identifier_type = 'merchant_name_cleaned' AND T.merchant_name_cleaned = R.identifier) OR
-        (R.identifier_type = 'description_cleaned' AND T.description_cleaned = R.identifier)
-    ) AND T.transaction_type = R.transaction_type
-    WHEN MATCHED AND T.primary_category IS NULL THEN
+    ON T.transaction_id = R.transaction_id
+    WHEN MATCHED THEN
         UPDATE SET
             primary_category = R.primary_category,
             secondary_category = R.secondary_category,
@@ -54,6 +73,7 @@ def run_categorization() -> str:
         merge_job.result()
         rules_updated_count = merge_job.num_dml_affected_rows or 0
         total_updated_count += rules_updated_count
+        analytics["rule_based_count"] = rules_updated_count
         logger.info(f"Rules-based categorization affected {rules_updated_count} rows.")
     except GoogleAPICallError as e:
         logger.error(f"🚨 BigQuery error during rule-based categorization: {e}")
@@ -108,7 +128,13 @@ def run_categorization() -> str:
             response_text = response.text
             cleaned_response = response_text.strip().replace('```json', '').replace('```', '').strip()
             
-            parsed_json = json.loads(cleaned_response)
+            try:
+                parsed_json = json.loads(cleaned_response)
+            except json.JSONDecodeError:
+                # If parsing fails, try to fix the JSON and parse again
+                cleaned_response = _fix_json_array(cleaned_response)
+                parsed_json = json.loads(cleaned_response)
+
 
             if isinstance(parsed_json, list):
                 for item in parsed_json:
@@ -171,6 +197,7 @@ def run_categorization() -> str:
             llm_merge_job.result()
             updated_count = llm_merge_job.num_dml_affected_rows or 0
             total_updated_count += updated_count
+            analytics["llm_based_count"] += updated_count
             logger.info(f"✅ Successfully updated {updated_count} transactions with LLM categories.")
             
             # Stage 4: Learn from LLM categorizations and create new rules
@@ -185,7 +212,42 @@ def run_categorization() -> str:
             client.delete_table(temp_table_id, not_found_ok=True)
             logger.info(f"Cleaned up temporary table: {temp_table_id}")
 
-    return f"✅ Categorization complete! Rules were applied, and the LLM categorized an additional {total_updated_count} transactions."
+    # Final analytics gathering
+    analytics["total_categorized"] = total_updated_count
+    
+    dist_query = """
+    SELECT primary_category, secondary_category, COUNT(*) as count
+    FROM `fsi-banking-agentspace.txns.transactions`
+    WHERE categorization_method IN ('rule-based', 'llm-powered')
+    GROUP BY 1, 2
+    ORDER BY count DESC
+    LIMIT 10
+    """
+    try:
+        dist_df = client.query(dist_query).to_dataframe()
+        analytics["category_distribution"] = dist_df.to_dict(orient='records')
+    except GoogleAPICallError as e:
+        logger.error(f"🚨 BigQuery error gathering final analytics: {e}")
+
+
+    # Format the final report
+    report = f"""
+    ✅ **Categorization Complete!**
+
+    Here's a summary of the process:
+
+    * **Total Transactions Categorized**: {analytics['total_categorized']}
+    * **By Rule-Based Method**: {analytics['rule_based_count']}
+    * **By LLM-Powered Method**: {analytics['llm_based_count']}
+
+    **Top 10 Category Assignments:**
+    | Primary Category | Secondary Category | Count |
+    |---|---|---|
+    """
+    for item in analytics['category_distribution']:
+        report += f"| {item['primary_category']} | {item['secondary_category']} | {item['count']} |\n"
+
+    return report
 
 def learn_and_create_rules_from_llm_categorizations(client: bigquery.Client):
     """

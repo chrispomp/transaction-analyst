@@ -8,10 +8,9 @@ def reset_all_transactions(confirmation: Literal["CONFIRM reset"] | None = None)
     To proceed, you must pass the exact string "CONFIRM reset" to this tool.
     """
     if confirmation != "CONFIRM reset":
-        return ('It looks like I need more context about what you\'re trying to '
-                'confirm. To reset all processed transaction data, please explicitly '
-                'state "Reset all processed transaction data" or confirm it by '
-                'typing "CONFIRM reset".')
+        return ('🤔 **Confirmation Needed**: To reset all processed transaction data, '
+                'please explicitly state "Reset all processed transaction data" or confirm it by '
+                'typing `CONFIRM reset`.')
 
     client = bigquery.Client()
     query = """
@@ -28,6 +27,6 @@ def reset_all_transactions(confirmation: Literal["CONFIRM reset"] | None = None)
     """
     try:
         client.query(query).result()
-        return "✅ Successfully reset all derived fields in the `transactions` table."
+        return "✅ **Success!** All derived fields in the `transactions` table have been reset."
     except Exception as e:
-        return f"🚨 An error occurred while resetting transaction data: {e}"
+        return f"🚨 **Error**: An error occurred while resetting transaction data: {e}"

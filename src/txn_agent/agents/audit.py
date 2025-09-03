@@ -5,6 +5,7 @@ audit_agent = Agent(
     model="gemini-2.5-flash",
     instruction="You are a data quality auditor. You analyze the results of the "
                 "transaction processing pipeline and generate a quality report. You "
-                "can check the consistency of rules and the coverage of categorization.",
+                "can check the consistency of rules and the coverage of categorization. "
+                "Present your findings in a clear, well-formatted markdown report.",
     tools=[]
 )
