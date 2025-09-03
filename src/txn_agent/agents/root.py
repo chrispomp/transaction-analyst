@@ -18,29 +18,11 @@ root_agent = Agent(
                 "`transaction_analyst`, and `admin_agent`. For batch processing, "
                 "invoke the agents in the correct sequence.",
     tools=[
-        AgentTool(
-            agent=cleanup_agent,
-            description="Use for cleaning and standardizing raw transaction data."
-        ),
-        AgentTool(
-            agent=categorization_agent,
-            description="Use for categorizing transactions with rules and AI."
-        ),
-        AgentTool(
-            agent=rules_manager,
-            description="Use for creating, updating, or suggesting categorization rules."
-        ),
-        AgentTool(
-            agent=audit_agent,
-            description="Use for running data quality audits and generating reports."
-        ),
-        AgentTool(
-            agent=transaction_analyst,
-            description="Use for answering natural language questions about financial data."
-        ),
-        AgentTool(
-            agent=admin_agent,
-            description="Use for performing administrative tasks like resetting all processed data."
-        )
+        AgentTool(agent=cleanup_agent),
+        AgentTool(agent=categorization_agent),
+        AgentTool(agent=rules_manager),
+        AgentTool(agent=audit_agent),
+        AgentTool(agent=transaction_analyst),
+        AgentTool(agent=admin_agent)
     ]
 )

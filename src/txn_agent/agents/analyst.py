@@ -7,5 +7,5 @@ transaction_analyst = Agent(
                 "the user's questions by converting their natural language into an "
                 "efficient, read-only BigQuery SQL query. Execute the query and "
                 "present the answer clearly. Never modify data.",
-    tools=get_bq_toolset(read_only=True)
+    tools=[get_bq_toolset(read_only=True)]
 )
