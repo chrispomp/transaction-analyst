@@ -45,7 +45,7 @@ def update_rule_status(rule_id: int, status: str) -> str:
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
             bigquery.ScalarQueryParameter("status", "STRING", status),
-            bigquery.ScalarQueryParameter("rule_id", "INT64", rule_id),
+            bigquery.ScalarQueryParameter("rule_id", "STRING", rule_id),
         ]
     )
     try:

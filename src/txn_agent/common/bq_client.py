@@ -51,7 +51,7 @@ def setup_bigquery_tables(bq_client):
     ]
 
     rules_schema = [
-        bigquery.SchemaField("rule_id", "INT64", mode="REQUIRED"),
+        bigquery.SchemaField("rule_id", "STRING", mode="REQUIRED"),
         bigquery.SchemaField("primary_category", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("secondary_category", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("merchant_name_cleaned_match", "STRING", mode="NULLABLE"),

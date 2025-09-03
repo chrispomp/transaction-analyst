@@ -4,3 +4,4 @@ google-cloud-aiplatform
 google-auth
 pytest
 pandas
+db-dtypes
