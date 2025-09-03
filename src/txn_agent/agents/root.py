@@ -23,7 +23,7 @@ root_agent = Agent(
     2.  🗂️ **Categorize Transactions**: Assign categories to transactions using rules and AI.
     3.  룰 **Manage Rules**: Create, update, or suggest new categorization rules.
     4.  📊 **Analyze Transactions**: Ask questions about your transaction data.
-    5.   auditing **Audit Data Quality**: Get a report on the quality of your data.
+    5.  🛡️ **Audit Data Quality**: Get a report on the quality of your data.
     6.  ⚙️ **System Administration**: Perform system-wide actions like resetting data.
 
     You can select a workflow by number or by describing what you want to do.

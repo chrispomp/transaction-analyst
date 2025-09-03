@@ -1,4 +1,4 @@
-from src.txn_agent.common.bq_client import get_bq_toolset
+from google.cloud import bigquery
 
 def run_full_cleanup() -> str:
     """
@@ -6,10 +6,8 @@ def run_full_cleanup() -> str:
     - Standardizes merchant names and descriptions.
     - Corrects transaction types based on the sign of the amount.
     """
-    bq_toolset = get_bq_toolset()
+    client = bigquery.Client()
 
-    # This query standardizes text fields by converting them to uppercase,
-    # trimming whitespace, and removing special characters.
     standardize_query = """
     UPDATE `fsi-banking-agentspace.txns.transactions`
     SET
@@ -18,7 +16,6 @@ def run_full_cleanup() -> str:
     WHERE merchant_name_cleaned IS NULL OR description_cleaned IS NULL;
     """
 
-    # This query corrects the transaction_type based on the transaction amount.
     correct_type_query = """
     UPDATE `fsi-banking-agentspace.txns.transactions`
     SET
@@ -33,14 +30,9 @@ def run_full_cleanup() -> str:
     """
 
     try:
-        # Note: The ADK's BigQueryToolset.execute_sql does not return the
-        # number of rows modified by DML statements. A more advanced implementation
-        # might use the google-cloud-bigquery client library directly to get
-        # job statistics for a more detailed summary.
-        bq_toolset.execute_sql(query=standardize_query)
-        bq_toolset.execute_sql(query=correct_type_query)
+        client.query(standardize_query).result()
+        client.query(correct_type_query).result()
 
-        return "Cleanup successful. Text fields were standardized and transaction types were corrected."
+        return "✅ Cleanup successful. Text fields were standardized and transaction types were corrected."
     except Exception as e:
-        # In a production system, log the full error.
-        return f"An error occurred during data cleanup: {e}"
+        return f"🚨 An error occurred during data cleanup: {e}"

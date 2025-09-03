@@ -1,15 +1,13 @@
-# src/txn_agent/tools/categorization_tools.py
-
 import json
 from google.adk.models import Gemini
-from src.txn_agent.common.bq_client import get_bq_toolset
 from src.txn_agent.common.constants import VALID_CATEGORIES
+from google.cloud import bigquery
 
 def run_categorization() -> str:
     """
     Categorizes transactions using a hybrid rules-based and LLM-powered approach.
     """
-    bq_toolset = get_bq_toolset()
+    client = bigquery.Client()
 
     # Stage 1: Apply existing rules using a MERGE statement.
     rules_merge_query = """
@@ -24,11 +22,11 @@ def run_categorization() -> str:
         UPDATE SET
             primary_category = R.primary_category,
             secondary_category = R.secondary_category,
-            category_method = 'rule-based',
+            categorization_method = 'rule-based',
             rule_id = R.rule_id
     """
     try:
-        bq_toolset.execute_sql(query=rules_merge_query)
+        client.query(rules_merge_query).result()
     except Exception as e:
         return f"🚨 An error occurred during rule-based categorization: {e}"
 
@@ -37,10 +35,10 @@ def run_categorization() -> str:
     SELECT transaction_id, description_cleaned, merchant_name_cleaned
     FROM `fsi-banking-agentspace.txns.transactions`
     WHERE primary_category IS NULL
-    LIMIT 100; -- Process in batches to manage LLM call size
+    LIMIT 100;
     """
     try:
-        uncategorized_df = bq_toolset.execute_sql(query=select_uncategorized_query)
+        uncategorized_df = client.query(select_uncategorized_query).to_dataframe()
     except Exception as e:
         return f"🚨 Failed to retrieve uncategorized transactions: {e}"
 
@@ -61,10 +59,10 @@ def run_categorization() -> str:
     where each object contains the `transaction_id`, `primary_category`, and `secondary_category`.
 
     Example Input:
-    [{"transaction_id": "txn_123", "description_cleaned": "UBER TRIP", "merchant_name_cleaned": "UBER"}]
+    [{{"transaction_id": "txn_123", "description_cleaned": "UBER TRIP", "merchant_name_cleaned": "UBER"}}]
 
     Example Output:
-    [{"transaction_id": "txn_123", "primary_category": "Expense", "secondary_category": "Auto & Transport"}]
+    [{{"transaction_id": "txn_123", "primary_category": "Expense", "secondary_category": "Auto & Transport"}}]
 
     Transactions to categorize:
     """
@@ -99,11 +97,11 @@ def run_categorization() -> str:
         UPDATE SET
             primary_category = S.primary_category,
             secondary_category = S.secondary_category,
-            category_method = 'llm-powered'
+            categorization_method = 'llm-powered'
     """
 
     try:
-        bq_toolset.execute_sql(query=llm_merge_query)
+        client.query(llm_merge_query).result()
         return f"✅ Categorization complete! Rules were applied, and the LLM categorized an additional {len(categorized_data)} transactions."
     except Exception as e:
         return f"🚨 An error occurred during LLM-based categorization: {e}"
