@@ -1,6 +1,9 @@
+# src/txn_agent/tools/categorization_tools.py
+
 import json
 from google.adk.models import Gemini
 from src.txn_agent.common.bq_client import get_bq_toolset
+from src.txn_agent.common.constants import VALID_CATEGORIES
 
 def run_categorization() -> str:
     """
@@ -9,7 +12,6 @@ def run_categorization() -> str:
     bq_toolset = get_bq_toolset()
 
     # Stage 1: Apply existing rules using a MERGE statement.
-    # This is more efficient than a simple UPDATE as it can handle more complex logic.
     rules_merge_query = """
     MERGE `fsi-banking-agentspace.txns.transactions` AS T
     USING (
@@ -28,7 +30,7 @@ def run_categorization() -> str:
     try:
         bq_toolset.execute_sql(query=rules_merge_query)
     except Exception as e:
-        return f"An error occurred during rule-based categorization: {e}"
+        return f"🚨 An error occurred during rule-based categorization: {e}"
 
     # Stage 2: Use an LLM for remaining uncategorized transactions.
     select_uncategorized_query = """
@@ -40,24 +42,29 @@ def run_categorization() -> str:
     try:
         uncategorized_df = bq_toolset.execute_sql(query=select_uncategorized_query)
     except Exception as e:
-        return f"Failed to retrieve uncategorized transactions: {e}"
+        return f"🚨 Failed to retrieve uncategorized transactions: {e}"
 
     if uncategorized_df.empty:
-        return "Categorization complete. No new transactions required LLM categorization."
+        return "✅ Categorization complete. No new transactions required LLM categorization."
 
     model = Gemini(model="gemini-2.5-flash")
 
-    prompt = """
+    prompt = f"""
     You are an expert financial transaction categorizer. Based on the provided
     JSON data of transactions, determine the correct `primary_category` and
-    `secondary_category` for each. Return the output as a valid JSON array of objects,
+    `secondary_category` for each.
+
+    Please use only the following valid categories:
+    {json.dumps(VALID_CATEGORIES, indent=4)}
+
+    Return the output as a valid JSON array of objects,
     where each object contains the `transaction_id`, `primary_category`, and `secondary_category`.
 
     Example Input:
     [{"transaction_id": "txn_123", "description_cleaned": "UBER TRIP", "merchant_name_cleaned": "UBER"}]
 
     Example Output:
-    [{"transaction_id": "txn_123", "primary_category": "Transportation", "secondary_category": "Rideshare"}]
+    [{"transaction_id": "txn_123", "primary_category": "Expense", "secondary_category": "Auto & Transport"}]
 
     Transactions to categorize:
     """
@@ -66,17 +73,14 @@ def run_categorization() -> str:
 
     try:
         response_text = model.predict(prompt).text
-        # The model might wrap the JSON in markdown, so we clean it up.
         cleaned_response = response_text.strip().replace('```json', '').replace('```', '').strip()
         categorized_data = json.loads(cleaned_response)
     except (json.JSONDecodeError, AttributeError, Exception) as e:
-        return f"Failed to parse LLM response: {e}. Response was: {response_text}"
+        return f"🚨 Failed to parse LLM response: {e}. Response was: {response_text}"
 
     if not categorized_data:
-        return "LLM categorization ran but produced no valid category suggestions."
+        return "🤔 LLM categorization ran, but no new category suggestions were produced."
 
-    # Create a string of values to use in the final MERGE statement.
-    # This pattern is efficient for updating rows from a list of new data.
     values_to_merge = ", ".join([
         f"('{item['transaction_id']}', '{item['primary_category']}', '{item['secondary_category']}')"
         for item in categorized_data
@@ -100,6 +104,6 @@ def run_categorization() -> str:
 
     try:
         bq_toolset.execute_sql(query=llm_merge_query)
-        return f"Categorization complete. Rules applied and {len(categorized_data)} transactions were categorized by the LLM."
+        return f"✅ Categorization complete! Rules were applied, and the LLM categorized an additional {len(categorized_data)} transactions."
     except Exception as e:
-        return f"An error occurred during LLM-based categorization: {e}"
+        return f"🚨 An error occurred during LLM-based categorization: {e}"
