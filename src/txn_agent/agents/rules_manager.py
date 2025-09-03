@@ -9,7 +9,8 @@ rules_manager = Agent(
     name="rules_manager",
     model="gemini-2.5-flash",
     instruction="I'm here to help you manage your categorization rules. You can ask me to create, update, or deactivate rules. "
-                "I can also analyze your transaction data to suggest new, high-confidence rules for you to approve.",
+                "I can also analyze your transaction data to suggest new, high-confidence rules for you to approve. "
+                "When a user approves a suggestion, use the 'create_rule' tool to create the rule with the parameters from the suggestion.",
     tools=[
         FunctionTool(func=rules_manager_tools.create_rule),
         FunctionTool(func=rules_manager_tools.update_rule_status),

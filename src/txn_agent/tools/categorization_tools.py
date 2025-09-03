@@ -9,6 +9,7 @@ from google.cloud import bigquery
 from vertexai.generative_models import GenerativeModel
 from src.txn_agent.common.constants import VALID_CATEGORIES
 from src.txn_agent.tools import rules_manager_tools
+from src.txn_agent.common.cancellation import cancellation_token
 
 # Set up a logger for this module
 logger = logging.getLogger(__name__)
@@ -17,6 +18,7 @@ def run_categorization() -> str:
     """
     Categorizes transactions using a hybrid rules-based and LLM-powered approach.
     """
+    cancellation_token.reset()
     logger.info("Starting categorization process...")
     client = bigquery.Client()
     total_updated_count = 0
@@ -59,6 +61,8 @@ def run_categorization() -> str:
 
     # Stage 2: Fetch and process uncategorized transactions in a loop
     while True:
+        if cancellation_token.is_cancellation_requested():
+            return "🛑 Operation cancelled by user."
         logger.info("Stage 2: Fetching uncategorized transactions for LLM.")
         select_uncategorized_query = """
         SELECT transaction_id, description_cleaned, merchant_name_cleaned
@@ -200,7 +204,7 @@ def learn_and_create_rules_from_llm_categorizations(client: bigquery.Client):
         FROM `fsi-banking-agentspace.txns.transactions`
         WHERE categorization_method = 'llm-powered' AND transaction_type IS NOT NULL
         GROUP BY 1, 2, 3, 4
-        HAVING COUNT(*) > 3
+        HAVING COUNT(*) > 1
     )
     SELECT * FROM LlmCategorizedMerchants
     WHERE NOT EXISTS (
@@ -221,6 +225,9 @@ def learn_and_create_rules_from_llm_categorizations(client: bigquery.Client):
         logger.info(f"Found {len(new_rules_df)} new merchants to create rules for.")
 
         for _, row in new_rules_df.iterrows():
+            if cancellation_token.is_cancellation_requested():
+                logger.info("Cancellation requested, stopping rule creation.")
+                break
             rules_manager_tools.create_rule(
                 primary_category=row['primary_category'],
                 secondary_category=row['secondary_category'],

@@ -10,6 +10,7 @@ from .rules_manager import rules_manager
 from .audit import audit_agent
 from .analyst import transaction_analyst
 from .admin import admin_agent
+from .cancellation import cancellation_agent
 
 root_agent = Agent(
     name="root_agent",
@@ -25,6 +26,7 @@ root_agent = Agent(
     4.  📊 **Analyze Transactions**: Ask questions about your transaction data.
     5.  🛡️ **Audit Data Quality**: Get a report on the quality of your data.
     6.  ⚙️ **System Administration**: Perform system-wide actions like resetting data.
+    7.  🛑 **Cancel Operation**: Stop a currently running process.
 
     You can select a workflow by number or by describing what you want to do.
     """,
@@ -34,6 +36,7 @@ root_agent = Agent(
         AgentTool(agent=rules_manager),
         AgentTool(agent=audit_agent),
         AgentTool(agent=transaction_analyst),
-        AgentTool(agent=admin_agent)
+        AgentTool(agent=admin_agent),
+        AgentTool(agent=cancellation_agent)
     ]
 )
