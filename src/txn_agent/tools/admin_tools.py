@@ -7,10 +7,10 @@ def reset_all_transactions(confirmation: Literal["CONFIRM reset"] | None = None)
     This is a destructive operation that requires explicit confirmation.
     To proceed, you must pass the exact string "CONFIRM reset" to this tool.
     """
-    if confirmation != "CONFIRM reset":
+    if confirmation != "CONFIRM":
         return ('🤔 **Confirmation Needed**: To reset all processed transaction data, '
                 'please explicitly state "Reset all processed transaction data" or confirm it by '
-                'typing `CONFIRM reset`.')
+                'typing `CONFIRM`.')
 
     client = bigquery.Client()
     query = """

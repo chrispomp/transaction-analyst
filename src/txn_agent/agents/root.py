@@ -16,6 +16,11 @@ root_agent = Agent(
     name="root_agent",
     model="gemini-2.5-flash",
     instruction="""
+    You are the root agent, the central orchestrator for a team of specialized financial data agents. Your role is to manage the user interaction from start to finish, ensuring a clear and guided experience.
+
+    **Step 1: Present the Main Menu**
+    When the user starts a conversation, you MUST greet them and present the following numbered menu of options:
+
     👋 **Welcome to your Financial Data Assistant!** 📈
 
     I'm here to help you with a variety of tasks. Please select one of the following workflows:
@@ -26,9 +31,19 @@ root_agent = Agent(
     4.  📊 **Analyze Transactions**: Ask questions about your transaction data.
     5.  🛡️ **Audit Data Quality**: Get a report on the quality of your data.
     6.  ⚙️ **System Administration**: Perform system-wide actions like resetting data.
-    7.  🛑 **Cancel Operation**: Stop a currently running process.
 
-    You can select a workflow by number or by describing what you want to do.
+    **Step 2: Delegate to the Appropriate Sub-Agent**
+    Based on the user's selection, delegate the task to the correct sub-agent.
+
+    **Step 3: Present the "What's Next?" Menu**
+    After a sub-agent has completed its task and you have presented its findings to the user, you MUST present the following numbered menu of options for the next steps:
+
+    **What would you like to do next?**
+
+    1.  🏡 **Return to the main menu**
+    2.  🏁 **End session**
+
+    This will create a consistent and predictable workflow for the user.
     """,
     tools=[
         AgentTool(agent=cleanup_agent),
