@@ -45,9 +45,7 @@ def run_categorization() -> str:
     if uncategorized_df.empty:
         return "Categorization complete. No new transactions required LLM categorization."
 
-    # Initialize the LLM. The TDD specifies gemini-2.5-flash, but since that is
-    # a hypothetical model, I will use a realistic current model name.
-    model = Gemini(model_name="gemini-1.5-flash-001")
+    model = Gemini(model_name="gemini-2.5-flash")
 
     prompt = """
     You are an expert financial transaction categorizer. Based on the provided
