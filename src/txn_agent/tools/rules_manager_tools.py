@@ -119,7 +119,7 @@ def suggest_new_rules() -> str:
         WHERE categorization_method = 'llm-powered'
     )
     GROUP BY 1, 2, 3, 4, 5
-    HAVING COUNT(*) > 5
+    HAVING COUNT(*) > 2
     ORDER BY transaction_count DESC
     LIMIT 10;
     """
