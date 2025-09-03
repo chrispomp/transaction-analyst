@@ -1,5 +1,6 @@
-from google.adk.agents import Agent, FunctionTool
-from src.fin_agent.tools import cleanup_tools
+from google.adk.agents import Agent
+from google.adk.tools import FunctionTool
+from src.txn_agent.tools import cleanup_tools
 
 cleanup_agent = Agent(
     instruction="You are a data cleaning specialist. Use your tools to standardize "

@@ -1,6 +1,6 @@
 import json
 from google.adk.models import Gemini
-from src.fin_agent.common.bq_client import get_bq_toolset
+from src.txn_agent.common.bq_client import get_bq_toolset
 
 def run_categorization() -> str:
     """

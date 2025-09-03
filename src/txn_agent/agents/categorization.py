@@ -1,5 +1,6 @@
-from google.adk.agents import Agent, FunctionTool
-from src.fin_agent.tools import categorization_tools
+from google.adk.agents import Agent
+from google.adk.tools import FunctionTool
+from src.txn_agent.tools import categorization_tools
 
 categorization_agent = Agent(
     instruction="You categorize financial transactions in two stages. First, apply all "

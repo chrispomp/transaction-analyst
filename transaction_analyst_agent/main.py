@@ -1,7 +1,8 @@
 import os
 import sys
 from google.cloud.aiplatform import reasoning_engines
-from src.fin_agent.agents.root import root_agent
+# Correct the import path here as well
+from src.txn_agent.agents.root import root_agent
 
 # For local development, it's common to use a .env file.
 # To enable this, you would uncomment the following lines and add `python-dotenv`

@@ -1,4 +1,4 @@
-from src.fin_agent.common.bq_client import get_bq_toolset
+from src.txn_agent.common.bq_client import get_bq_toolset
 
 def create_rule(primary_category: str, secondary_category: str, merchant_match: str, persona: str = 'general', confidence: float = 0.99) -> str:
     """

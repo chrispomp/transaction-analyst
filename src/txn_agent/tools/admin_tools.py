@@ -1,4 +1,4 @@
-from src.fin_agent.common.bq_client import get_bq_toolset
+from src.txn_agent.common.bq_client import get_bq_toolset
 
 def reset_all_transactions() -> str:
     """

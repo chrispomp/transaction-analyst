@@ -1,5 +1,6 @@
-from google.adk.agents import Agent, FunctionTool
-from src.fin_agent.tools import rules_manager_tools
+from google.adk.agents import Agent
+from google.adk.tools import FunctionTool
+from src.txn_agent.tools import rules_manager_tools
 
 rules_manager = Agent(
     instruction="You manage categorization rules. You can create, update, and "

@@ -1,5 +1,6 @@
-from google.adk.agents import Agent, FunctionTool
-from src.fin_agent.tools import admin_tools
+from google.adk.agents import Agent
+from google.adk.tools import FunctionTool
+from src.txn_agent.tools import admin_tools
 
 admin_agent = Agent(
     instruction="You are the system administrator. You can perform critical, "
