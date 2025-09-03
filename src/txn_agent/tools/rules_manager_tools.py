@@ -1,13 +1,23 @@
+# src/txn_agent/tools/rules_manager_tools.py
+
+from __future__ import annotations
+import logging
+from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import bigquery
 from src.txn_agent.common.constants import VALID_CATEGORIES
 import pandas as pd
+
+# Set up a logger for this module
+logger = logging.getLogger(__name__)
 
 def create_rule(primary_category: str, secondary_category: str, merchant_match: str, persona: str = 'general', confidence: float = 0.99) -> str:
     """
     Creates a new categorization rule in the 'rules' table.
     Inputs are parameterized to prevent SQL injection.
     """
+    logger.info(f"Attempting to create a new rule for merchant: '{merchant_match}'")
     if primary_category not in VALID_CATEGORIES or secondary_category not in VALID_CATEGORIES.get(primary_category, []):
+        logger.warning(f"Invalid category specified: {primary_category}/{secondary_category}")
         return f"⚠️ Invalid category specified. Please choose from the available categories."
 
     client = bigquery.Client()
@@ -27,13 +37,17 @@ def create_rule(primary_category: str, secondary_category: str, merchant_match: 
     )
     try:
         client.query(query, job_config=job_config).result()
+        logger.info(f"Successfully created rule for '{merchant_match}'.")
         return f"✅ Successfully created a new rule for '{merchant_match}'."
-    except Exception as e:
+    except GoogleAPICallError as e:
+        logger.error(f"🚨 BigQuery error creating rule: {e}")
         return f"🚨 Error creating rule: {e}"
 
 def update_rule_status(rule_id: int, status: str) -> str:
     """Updates the status of a rule (e.g., 'active', 'inactive')."""
+    logger.info(f"Attempting to update rule ID {rule_id} to status '{status}'")
     if status not in ['active', 'inactive']:
+        logger.warning(f"Invalid status '{status}' provided for rule update.")
         return "⚠️ Invalid status. Must be 'active' or 'inactive'."
 
     client = bigquery.Client()
@@ -45,13 +59,15 @@ def update_rule_status(rule_id: int, status: str) -> str:
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
             bigquery.ScalarQueryParameter("status", "STRING", status),
-            bigquery.ScalarQueryParameter("rule_id", "STRING", rule_id),
+            bigquery.ScalarQueryParameter("rule_id", "INT64", rule_id),
         ]
     )
     try:
         client.query(query, job_config=job_config).result()
+        logger.info(f"Successfully updated rule {rule_id}.")
         return f"✅ Successfully updated rule {rule_id} to '{status}'."
-    except Exception as e:
+    except GoogleAPICallError as e:
+        logger.error(f"🚨 BigQuery error updating rule {rule_id}: {e}")
         return f"🚨 Error updating rule: {e}"
 
 def suggest_new_rules() -> str:
@@ -59,6 +75,7 @@ def suggest_new_rules() -> str:
     Analyzes LLM-categorized transactions to suggest new, high-confidence rules
     for merchants that frequently get categorized by the LLM.
     """
+    logger.info("Analyzing LLM-categorized transactions for new rule suggestions.")
     client = bigquery.Client()
     query = """
     SELECT
@@ -76,6 +93,7 @@ def suggest_new_rules() -> str:
     try:
         suggestions_df = client.query(query).to_dataframe()
         if suggestions_df.empty:
+            logger.info("No new rule suggestions found.")
             return "👍 No new rule suggestions found at this time."
 
         suggestions_str = "Here are some new rule suggestions for your approval:\n\n"
@@ -88,6 +106,8 @@ def suggest_new_rules() -> str:
                 f"{row['transaction_count']} recent transactions |\n"
             )
 
+        logger.info(f"Generated {len(suggestions_df)} new rule suggestions.")
         return suggestions_str
-    except Exception as e:
+    except GoogleAPICallError as e:
+        logger.error(f"🚨 BigQuery error generating new rule suggestions: {e}")
         return f"🚨 Error generating new rule suggestions: {e}"
