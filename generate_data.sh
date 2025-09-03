@@ -80,7 +80,7 @@ INCOME_CATEGORIES = [
     {"secondary_category": "Income", "description_template": "{merchant} DEPOSIT PMT_{id}"},
     {"secondary_category": "Interest Income", "description_template": "{bank} INTEREST PAYMENT"},
     {"secondary_category": "Refund", "description_template": "REFUND FROM {merchant}"},
-    {"secondary_category": "Other Income", "description_template": "MISC CREDIT {origin}"},
+    {"secondary_category": "Other Income", "description_template": "MISC Credit {origin}"},
 ]
 
 MERCHANT_TO_CHANNEL_MAP = {item['merchant']: item['channel'] for item in EXPENSE_TAXONOMY}
@@ -228,7 +228,7 @@ def build_monthly_prompt(profile: Dict, month_date: datetime, transactions_this_
     ```json
     [
         {{"description_raw": "SQ *BLUE BOTTLE COFFEE #B12", "merchant_name_raw": "SQ *BLUE BOTTLE COFFEE", "merchant_name_cleaned": "Blue Bottle Coffee", "secondary_category": "Food & Dining"}},
-        {{"description_raw": "POS DEBIT TRADER JOE'S #552 PHOENIX AZ", "merchant_name_raw": "TRADER JOE'S #552", "merchant_name_cleaned": "Trader Joe's", "secondary_category": "Groceries"}},
+        {{"description_raw": "POS Debit TRADER JOE'S #552 PHOENIX AZ", "merchant_name_raw": "TRADER JOE'S #552", "merchant_name_cleaned": "Trader Joe's", "secondary_category": "Groceries"}},
         {{"description_raw": "TST* The Corner Bistro", "merchant_name_raw": "TST* The Corner Bistro", "merchant_name_cleaned": "The Corner Bistro", "secondary_category": "Food & Dining"}},
         {{"description_raw": "AMAZON.COM*A12B34CD5 AMZN.COM/BILL WA", "merchant_name_raw": "AMAZON.COM*A12B34CD5", "merchant_name_cleaned": "Amazon.com", "secondary_category": "Shopping"}},
         {{"description_raw": "UBER TRIP 6J7K8L HELP.UBER.COM", "merchant_name_raw": "UBER TRIP", "merchant_name_cleaned": "Uber", "secondary_category": "Auto & Transport"}},
@@ -243,7 +243,7 @@ def build_monthly_prompt(profile: Dict, month_date: datetime, transactions_this_
     - **Persona Focus:** Generate transactions reflecting spending in categories like: {', '.join(persona_categories)}. Income should primarily come from sources like: {', '.join(persona['income_merchants'])}.
     - **Monthly Narrative:** {narrative_block}
     **CRITICAL INSTRUCTIONS:**
-    1.  **Differentiate Descriptions:** The `description_raw` MUST be more detailed than `merchant_name_raw`. It should contain the merchant name plus other realistic data like store numbers, transaction type prefixes (e.g. 'SQ *', 'POS DEBIT'), locations, or reference IDs.
+    1.  **Differentiate Descriptions:** The `description_raw` MUST be more detailed than `merchant_name_raw`. It should contain the merchant name plus other realistic data like store numbers, transaction type prefixes (e.g. 'SQ *', 'POS Debit'), locations, or reference IDs.
     2.  The `merchant_name_raw` MUST be a logical, consistent part of the `description_raw`.
     3.  The `merchant_name_cleaned` MUST be the canonical, recognizable name of the business.
     4.  For income, use `secondary_category`: "Income", "Refund", or "Other Income".
@@ -399,7 +399,7 @@ def inject_recurring_transactions(profile: Dict, history_months: int) -> List[Di
             day = min(bill['day_of_month'], (base_date.replace(day=28) + timedelta(days=4)).day)
             date = base_date.replace(day=day, hour=random.randint(9, 17), minute=random.randint(0, 59))
             amount = round(random.gauss(bill['amount_mean'], bill['amount_std']), 2)
-            raw_desc = f"ACH DEBIT - {bill['merchant_name']}"
+            raw_desc = f"ACH Debit - {bill['merchant_name']}"
             txns.append({
                 "transaction_id": f"TXN-{uuid.uuid4()}", "account_id": checking_account['account_id'],
                 "consumer_name": profile['consumer_name'], "persona_type": persona['persona_name'],

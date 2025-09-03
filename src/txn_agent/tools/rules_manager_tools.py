@@ -10,6 +10,7 @@ import pandas as pd
 
 # Set up a logger for this module
 logger = logging.getLogger(__name__)
+_rule_suggestions_cache = None
 
 def create_rule(primary_category: str, secondary_category: str, identifier: str, identifier_type: str, transaction_type: str, persona: str = 'general', confidence: float = 0.99) -> str:
     """
@@ -17,27 +18,59 @@ def create_rule(primary_category: str, secondary_category: str, identifier: str,
     Inputs are parameterized to prevent SQL injection.
     """
     logger.info(f"Attempting to create a new rule for identifier: '{identifier}'")
+    client = bigquery.Client()
+
+    # Validation checks
     if primary_category not in VALID_CATEGORIES or secondary_category not in VALID_CATEGORIES.get(primary_category, []):
         logger.warning(f"Invalid category specified: {primary_category}/{secondary_category}")
         return f"⚠️ Invalid category specified. Please choose from the available categories."
 
-    if transaction_type not in ['DEBIT', 'CREDIT']:
+    if transaction_type not in ['Debit', 'Credit']:
         logger.warning(f"Invalid transaction type: {transaction_type}")
-        return f"⚠️ Invalid transaction type specified. Must be 'DEBIT' or 'CREDIT'."
+        return f"⚠️ Invalid transaction type specified. Must be 'Debit' or 'Credit'."
 
     if identifier_type not in ['merchant_name_cleaned', 'description_cleaned']:
         logger.warning(f"Invalid identifier_type: {identifier_type}")
         return f"⚠️ Invalid identifier_type specified. Must be 'merchant_name_cleaned' or 'description_cleaned'."
 
-    client = bigquery.Client()
-    rule_id = str(uuid.uuid4())
+    # Check for existing or conflicting rules
+    check_query = """
+    SELECT rule_id, primary_category, secondary_category
+    FROM `fsi-banking-agentspace.txns.rules`
+    WHERE identifier = @identifier
+      AND identifier_type = @identifier_type
+      AND transaction_type = @transaction_type
+    """
+    job_config_check = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("identifier", "STRING", identifier),
+            bigquery.ScalarQueryParameter("identifier_type", "STRING", identifier_type),
+            bigquery.ScalarQueryParameter("transaction_type", "STRING", transaction_type),
+        ]
+    )
+    
+    try:
+        existing_rules = client.query(check_query, job_config=job_config_check).to_dataframe()
+        if not existing_rules.empty:
+            for _, rule in existing_rules.iterrows():
+                if rule['primary_category'] == primary_category and rule['secondary_category'] == secondary_category:
+                    return f"✅ This rule already exists (Rule ID: {rule['rule_id']}). No action taken."
+                else:
+                    return (f"⚠️ A conflicting rule already exists (Rule ID: {rule['rule_id']}) "
+                            f"that categorizes '{identifier}' as '{rule['primary_category']} / {rule['secondary_category']}'. "
+                            f"Please resolve the conflict before creating a new rule.")
+    except GoogleAPICallError as e:
+        logger.error(f"🚨 BigQuery error during rule check: {e}")
+        return f"🚨 Error checking for existing rules: {e}"
 
-    query = """
+    # If no conflicts, create the new rule
+    rule_id = str(uuid.uuid4())
+    insert_query = """
     INSERT INTO `fsi-banking-agentspace.txns.rules`
         (rule_id, primary_category, secondary_category, identifier, identifier_type, transaction_type, persona_type, confidence_score, status)
     VALUES (@rule_id, @primary_category, @secondary_category, @identifier, @identifier_type, @transaction_type, @persona, @confidence, 'active')
     """
-    job_config = bigquery.QueryJobConfig(
+    job_config_insert = bigquery.QueryJobConfig(
         query_parameters=[
             bigquery.ScalarQueryParameter("rule_id", "STRING", rule_id),
             bigquery.ScalarQueryParameter("primary_category", "STRING", primary_category),
@@ -50,7 +83,7 @@ def create_rule(primary_category: str, secondary_category: str, identifier: str,
         ]
     )
     try:
-        client.query(query, job_config=job_config).result()
+        client.query(insert_query, job_config=job_config_insert).result()
         logger.info(f"Successfully created rule for '{identifier}' with rule_id: {rule_id}.")
         return f"✅ Successfully created a new rule for '{identifier}'."
     except GoogleAPICallError as e:
@@ -89,42 +122,60 @@ def suggest_new_rules() -> str:
     Analyzes LLM-categorized transactions to suggest new, high-confidence rules
     for merchants that frequently get categorized by the LLM.
     """
+    global _rule_suggestions_cache
     logger.info("Analyzing LLM-categorized transactions for new rule suggestions.")
     client = bigquery.Client()
     query = """
-    SELECT
-        identifier,
-        identifier_type,
-        primary_category,
-        secondary_category,
-        transaction_type,
-        COUNT(*) AS transaction_count
-    FROM (
+    WITH PotentialRules AS (
         SELECT
-            merchant_name_cleaned as identifier,
-            'merchant_name_cleaned' as identifier_type,
+            identifier,
+            identifier_type,
             primary_category,
             secondary_category,
-            transaction_type
-        FROM `fsi-banking-agentspace.txns.transactions`
-        WHERE categorization_method = 'llm-powered'
-        UNION ALL
-        SELECT
-            description_cleaned as identifier,
-            'description_cleaned' as identifier_type,
-            primary_category,
-            secondary_category,
-            transaction_type
-        FROM `fsi-banking-agentspace.txns.transactions`
-        WHERE categorization_method = 'llm-powered'
+            transaction_type,
+            COUNT(*) AS transaction_count
+        FROM (
+            SELECT
+                merchant_name_cleaned as identifier,
+                'merchant_name_cleaned' as identifier_type,
+                primary_category,
+                secondary_category,
+                transaction_type
+            FROM `fsi-banking-agentspace.txns.transactions`
+            WHERE categorization_method = 'llm-powered'
+            UNION ALL
+            SELECT
+                description_cleaned as identifier,
+                'description_cleaned' as identifier_type,
+                primary_category,
+                secondary_category,
+                transaction_type
+            FROM `fsi-banking-agentspace.txns.transactions`
+            WHERE categorization_method = 'llm-powered'
+        )
+        GROUP BY 1, 2, 3, 4, 5
+        HAVING COUNT(*) > 1
     )
-    GROUP BY 1, 2, 3, 4, 5
-    HAVING COUNT(*) > 1
-    ORDER BY transaction_count DESC
+    SELECT
+        pr.identifier,
+        pr.identifier_type,
+        pr.primary_category,
+        pr.secondary_category,
+        pr.transaction_type,
+        pr.transaction_count
+    FROM PotentialRules pr
+    LEFT JOIN `fsi-banking-agentspace.txns.rules` r
+    ON pr.identifier = r.identifier
+    AND pr.identifier_type = r.identifier_type
+    AND pr.transaction_type = r.transaction_type
+    WHERE r.rule_id IS NULL
+    ORDER BY pr.transaction_count DESC
     LIMIT 10;
     """
     try:
         suggestions_df = client.query(query).to_dataframe()
+        _rule_suggestions_cache = suggestions_df.to_dict(orient='records')
+
         if suggestions_df.empty:
             logger.info("No new rule suggestions found.")
             return "👍 No new rule suggestions found at this time."
@@ -146,3 +197,27 @@ def suggest_new_rules() -> str:
     except GoogleAPICallError as e:
         logger.error(f"🚨 BigQuery error generating new rule suggestions: {e}")
         return f"🚨 Error generating new rule suggestions: {e}"
+
+def bulk_create_rules() -> str:
+    """
+    Creates all rules from the last set of suggestions.
+    """
+    global _rule_suggestions_cache
+    if not _rule_suggestions_cache:
+        return "⚠️ No rule suggestions are available to approve. Please run `suggest_new_rules` first."
+
+    results = []
+    for suggestion in _rule_suggestions_cache:
+        result = create_rule(
+            primary_category=suggestion['primary_category'],
+            secondary_category=suggestion['secondary_category'],
+            identifier=suggestion['identifier'],
+            identifier_type=suggestion['identifier_type'],
+            transaction_type=suggestion['transaction_type']
+        )
+        results.append(result)
+    
+    # Clear the cache after processing
+    _rule_suggestions_cache = None
+    
+    return "✅ Bulk rule creation complete:\n" + "\n".join(results)

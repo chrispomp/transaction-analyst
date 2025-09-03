@@ -20,13 +20,13 @@ def run_full_cleanup() -> str:
     UPDATE `fsi-banking-agentspace.txns.transactions`
     SET
         transaction_type = CASE
-            WHEN amount < 0 THEN 'DEBIT'
-            WHEN amount > 0 THEN 'CREDIT'
+            WHEN amount < 0 THEN 'Debit'
+            WHEN amount > 0 THEN 'Credit'
             ELSE 'ZERO'
         END
     WHERE transaction_type IS NULL OR
-          (amount < 0 AND transaction_type != 'DEBIT') OR
-          (amount > 0 AND transaction_type != 'CREDIT');
+          (amount < 0 AND transaction_type != 'Debit') OR
+          (amount > 0 AND transaction_type != 'Credit');
     """
 
     try:
