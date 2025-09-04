@@ -1,6 +1,6 @@
 # Generates high-fidelity, narratively cohesive synthetic data for testing
 # AI/ML models for credit scoring based on transaction history.
-# Version 8.2 - Added 'Peer-to-Peer Debit' expense category.
+# Version 8.3 - Standardized cleaned fields to uppercase.
 
 import os
 import json
@@ -55,7 +55,7 @@ VALID_CATEGORIES = {
         "Health & Wellness", "Auto & Transport", "Travel & Vacation", "Loan Payment", "Rent Payment",
         "Software & Tech", "Medical", "Insurance", "Bills & Utilities", "ATM Withdrawal",
         "Fees & Charges", "Business Services", "Other Expense", "Mortgage Payment", "Streaming Services",
-        "Peer-to-Peer Debit" # MODIFICATION: Added new category
+        "Peer-to-Peer Debit"
     ]
 }
 
@@ -185,7 +185,7 @@ AMOUNT_DISTRIBUTIONS = {
     "Loan Payment": {"log_mean": 6.0, "log_std": 0.2}, "Mortgage Payment": {"log_mean": 7.5, "log_std": 0.2},
     "Rent Payment": {"log_mean": 7.2, "log_std": 0.3}, "Insurance": {"log_mean": 5.0, "log_std": 0.4},
     "Bills & Utilities": {"log_mean": 4.5, "log_std": 0.5},
-    "Peer-to-Peer Debit": {"log_mean": 4.8, "log_std": 1.0}, # MODIFICATION: Added distribution
+    "Peer-to-Peer Debit": {"log_mean": 4.8, "log_std": 1.0},
     # Income
     "Gig Income": {"log_mean": 6.0, "log_std": 0.8}, "Payroll": {"log_mean": 7.8, "log_std": 0.2},
     "Interest Income": {"log_mean": 2.5, "log_std": 0.4}, "Refund": {"log_mean": 4.0, "log_std": 0.9},
@@ -212,7 +212,8 @@ def generate_realistic_timestamp(base_date: datetime) -> datetime:
 def clean_description(raw_desc: str) -> str:
     if not isinstance(raw_desc, str):
         return ""
-    cleaned = re.sub(r'[^a-zA-Z0-9\s]', '', raw_desc).lower()
+    # MODIFICATION: Changed .lower() to .upper()
+    cleaned = re.sub(r'[^a-zA-Z0-9\s]', '', raw_desc).upper()
     return re.sub(r'\s+', ' ', cleaned).strip()
 
 # --- III. PROMPT ENGINEERING & SCHEMA DEFINITION ---
@@ -222,7 +223,7 @@ TRANSACTION_SCHEMA_FOR_LLM = {
         "type": "object", "properties": {
             "description_raw": {"type": "string", "description": "The complete, raw transaction line item. MUST include extra details beyond just the merchant name, such as transaction prefixes (SQ*, TST*), store numbers, location, or reference codes."},
             "merchant_name_raw": {"type": "string", "description": "The raw merchant name as extracted from the description (e.g., 'SQ *BLUE BOTTLE COFFEE #B12')."},
-            "merchant_name_cleaned": {"type": "string", "description": "The cleaned, canonical merchant name (e.g., 'Blue Bottle Coffee')."},
+            "merchant_name_cleaned": {"type": "string", "description": "The cleaned, canonical merchant name (e.g., 'BLUE BOTTLE COFFEE')."},
             "secondary_category": {"type": "string", "enum": VALID_CATEGORIES["Income"] + VALID_CATEGORIES["Expense"], "description": "The detailed sub-category of the transaction."}
         }, "required": ["description_raw", "merchant_name_raw", "merchant_name_cleaned", "secondary_category"]
     }
@@ -239,7 +240,6 @@ def build_monthly_prompt(profile: Dict, month_date: datetime, transactions_this_
 
     income_merchant_example = random.choice(persona.get("income_merchants", ["DEPOSIT"]))
     
-    # Dynamically list some relevant expense categories for the persona
     persona_expense_categories = random.sample(VALID_CATEGORIES["Expense"], k=5)
     
     few_shot_examples = f"""
@@ -325,7 +325,7 @@ def setup_bigquery_table():
     table = bigquery.Table(table_ref, schema=TRANSACTIONS_SCHEMA)
     bq_client.create_table(table)
     logging.info(f"Sent request to create table '{TABLE_ID}'.")
-    time.sleep(5) # Give BQ time to create the table
+    time.sleep(5) 
     try:
         bq_client.get_table(table_ref)
         logging.info(f"✅ Table '{TABLE_ID}' successfully verified and is ready.")
@@ -384,7 +384,9 @@ def inject_recurring_transactions(profile: Dict, history_months: int) -> List[Di
                 "institution_name": checking_account['institution_name'], "account_type": "Checking Account",
                 "transaction_date": date.isoformat(), "transaction_type": "Debit", "amount": amount, "is_recurring": True,
                 "description_raw": raw_desc, "description_cleaned": clean_description(raw_desc),
-                "merchant_name_raw": bill['merchant_name'], "merchant_name_cleaned": bill['merchant_name'],
+                "merchant_name_raw": bill['merchant_name'],
+                # MODIFICATION: Ensure uppercase
+                "merchant_name_cleaned": bill['merchant_name'].upper(),
                 "primary_category": "Expense", "secondary_category": bill['secondary_category'], "channel": "ACH",
                 "categorization_update_timestamp": datetime.now(timezone.utc).isoformat(),
             })
@@ -409,7 +411,9 @@ def inject_programmatic_event_transactions(profile: Dict, life_events: List[Dict
             "institution_name": account['institution_name'], "account_type": account_type, "transaction_date": date.isoformat(),
             "transaction_type": "Credit" if is_credit else "Debit", "amount": amount, "is_recurring": False,
             "description_raw": raw_desc, "description_cleaned": clean_description(raw_desc),
-            "merchant_name_raw": merchant, "merchant_name_cleaned": merchant,
+            "merchant_name_raw": merchant,
+            # MODIFICATION: Ensure uppercase
+            "merchant_name_cleaned": merchant.upper(),
             "primary_category": "Income" if is_credit else "Expense", "secondary_category": sig['secondary_category'], "channel": channel,
             "categorization_update_timestamp": datetime.now(timezone.utc).isoformat(),
         })
@@ -431,6 +435,10 @@ async def generate_cohesive_txns_for_consumer(profile: Dict, history_months: int
         
         for txn in monthly_txns_from_llm:
             try:
+                # MODIFICATION: Ensure cleaned merchant name is uppercase
+                if 'merchant_name_cleaned' in txn and isinstance(txn['merchant_name_cleaned'], str):
+                    txn['merchant_name_cleaned'] = txn['merchant_name_cleaned'].upper()
+
                 cat_l2 = txn['secondary_category']
                 is_credit = cat_l2 in VALID_CATEGORIES["Income"]
                 
@@ -441,15 +449,14 @@ async def generate_cohesive_txns_for_consumer(profile: Dict, history_months: int
                     transaction_type = "Credit"
                     final_amount = abs(amount)
                     channel = "P2P" if cat_l2 == "Peer-to-Peer Credit" else "ACH"
-                else: # Is Expense
+                else: 
                     account_type = random.choice([acc for acc in profile['accounts'].keys() if acc != "Savings Account"])
                     transaction_type = "Debit"
                     final_amount = -abs(amount)
-                    # MODIFICATION: Assign correct channel for P2P Debit
                     if cat_l2 == "Peer-to-Peer Debit":
                         channel = "P2P"
                     else:
-                        channel = MERCHANT_TO_CHANNEL_MAP.get(txn['merchant_name_cleaned'], "Card-Not-Present")
+                        channel = MERCHANT_TO_CHANNEL_MAP.get(txn.get('merchant_name_cleaned'), "Card-Not-Present")
                 
                 account = profile['accounts'][account_type]
                 
