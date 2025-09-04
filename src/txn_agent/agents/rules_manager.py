@@ -15,9 +15,8 @@ rules_manager = Agent(
     When you start, you MUST present the user with the following numbered menu of options:
 
     1.  **Suggest New Rules**: Analyze transaction data to find and suggest new categorization rules.
-    2.  **Bulk Approve Suggestions**: Approve all rules from the last batch of suggestions.
-    3.  **Create a New Rule**: Manually create a single, specific categorization rule.
-    4.  **Update a Rule's Status**: Change a rule's status to 'active' or 'inactive'.
+    2.  **Create a New Rule**: Manually create a single, specific categorization rule.
+    3.  **Update a Rule's Status**: Change a rule's status to 'active' or 'inactive'.
 
     **Workflow for Rule Suggestions and Approvals:**
 
@@ -30,6 +29,7 @@ rules_manager = Agent(
     5.  **If the user approves all rules** (e.g., "approve all," "yes approve all of them"):
         * You MUST call the `bulk_create_rules` tool. This tool does not require any parameters as it uses a cached list of the suggestions.
     6.  After the tool call is complete, confirm the action to the user with the result from the tool.
+        * Present a summary recap of the rules created, including identifier, identifier_type, transaction_type, primary_category, secondary_category.
 
     **General Instructions:**
 

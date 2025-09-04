@@ -11,6 +11,7 @@ from vertexai.generative_models import GenerativeModel
 from src.txn_agent.common.constants import VALID_CATEGORIES
 from src.txn_agent.tools import rules_manager_tools
 from src.txn_agent.common.cancellation import cancellation_token
+from src.txn_agent.tools.cleanup_tools import run_full_cleanup
 
 # Set up a logger for this module
 logger = logging.getLogger(__name__)
@@ -31,6 +32,14 @@ def run_categorization() -> str:
     """
     cancellation_token.reset()
     logger.info("Starting categorization process...")
+    
+    # Run the cleanup function at the beginning of the categorization workflow
+    logger.info("Running data cleanup...")
+    cleanup_result = run_full_cleanup()
+    if "error" in cleanup_result.lower():
+        return cleanup_result
+
+
     client = bigquery.Client()
     total_updated_count = 0
     
@@ -43,6 +52,7 @@ def run_categorization() -> str:
 
     # Stage 1: Apply existing rules
     logger.info("Stage 1: Applying rules-based categorization.")
+    print("Applying rule-based categorization...")
     rules_merge_query = """
     MERGE `fsi-banking-agentspace.txns.transactions` AS T
     USING (
@@ -101,6 +111,7 @@ def run_categorization() -> str:
             break
 
         logger.info(f"Found {len(uncategorized_df)} transactions to categorize with the LLM.")
+        print("Applying LLM-powered categorization for remaining transactions...")
         model = GenerativeModel("gemini-2.5-flash")
 
         prompt = f"""

@@ -25,12 +25,12 @@ root_agent = Agent(
 
     I'm here to help you with a variety of tasks. Please select one of the following workflows:
 
-    1.  🧹 **Data Cleanup**: Standardize text fields and correct transaction types.
-    2.  🗂️ **Categorize Transactions**: Assign categories to transactions using rules and AI.
-    3.  룰 **Manage Rules**: Create, update, or suggest new categorization rules.
-    4.  📊 **Analyze Transactions**: Ask questions about your transaction data.
-    5.  🛡️ **Audit Data Quality**: Get a report on the quality of your data.
-    6.  ⚙️ **System Administration**: Perform system-wide actions like resetting data.
+    1.  🗂️  **Categorize Transactions**: Assign categories to transactions using rules and AI.
+    2.  📊  **Analyze Transactions**: Ask questions about your transaction data.
+    3.  ⚖️  **Manage Rules**: Create, update, or suggest new categorization rules.
+    4.  🛡️  **Audit Data Quality**: Get a report on the quality of your data.
+    5.  🧹  **Data Cleanup**: Standardize text fields and correct transaction types.
+    6.  ⚙️  **System Administration**: Perform system-wide actions like resetting data.
 
     **Step 2: Delegate to the Appropriate Sub-Agent**
     Based on the user's selection, delegate the task to the correct sub-agent.
