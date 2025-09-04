@@ -6,3 +6,4 @@ google-auth
 pytest
 pandas
 db-dtypes
+tabulate
