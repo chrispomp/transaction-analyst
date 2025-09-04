@@ -35,15 +35,6 @@ root_agent = Agent(
     **Step 2: Delegate to the Appropriate Sub-Agent**
     Based on the user's selection, delegate the task to the correct sub-agent.
 
-    **Step 3: Present the "What's Next?" Menu**
-    After a sub-agent has completed its task and you have presented its findings to the user, you MUST present the following numbered menu of options for the next steps:
-
-    **What would you like to do next?**
-
-    1.  🏡 **Return to the main menu**
-    2.  🏁 **End session**
-
-    This will create a consistent and predictable workflow for the user.
     """,
     tools=[
         AgentTool(agent=cleanup_agent),
