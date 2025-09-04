@@ -28,9 +28,9 @@ def create_rule(primary_category: str, secondary_category: str, identifier: str,
         logger.warning(f"Invalid category specified: {primary_category}/{secondary_category}")
         return f"⚠️ **Invalid Category**: `{primary_category}/{secondary_category}` is not a valid category combination. Please choose from the available categories."
 
-    if transaction_type not in ['DEBIT', 'Credit']:
+    if transaction_type not in ['Debit', 'Credit']:
         logger.warning(f"Invalid transaction type: {transaction_type}")
-        return f"⚠️ **Invalid Transaction Type**: `{transaction_type}` is not a valid transaction type. It must be either 'DEBIT' or 'Credit'."
+        return f"⚠️ **Invalid Transaction Type**: `{transaction_type}` is not a valid transaction type. It must be either 'Debit' or 'Credit'."
 
     if identifier_type not in ['merchant_name_cleaned', 'description_cleaned']:
         logger.warning(f"Invalid identifier_type: {identifier_type}")
