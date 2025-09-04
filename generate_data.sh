@@ -1,6 +1,6 @@
 # Generates high-fidelity, narratively cohesive synthetic data for testing
 # AI/ML models for credit scoring based on transaction history.
-# Version 7.1 - Optimized raw description generation for more realism.
+# Version 8.2 - Added 'Peer-to-Peer Debit' expense category.
 
 import os
 import json
@@ -34,10 +34,11 @@ TABLE_ID = "transactions"
 
 # --- Generation Parameters ---
 NUM_CONSUMERS_TO_GENERATE = 5
-MIN_VARIABLE_TRANSACTIONS_PER_MONTH = 35
-MAX_VARIABLE_TRANSACTIONS_PER_MONTH = 45
-TRANSACTION_HISTORY_MONTHS = 12
+MIN_VARIABLE_TRANSACTIONS_PER_MONTH = 25
+MAX_VARIABLE_TRANSACTIONS_PER_MONTH = 35
+TRANSACTION_HISTORY_MONTHS = 24
 CONCURRENT_CONSUMER_JOBS = 10
+
 
 # --- Setup Logging ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -47,40 +48,53 @@ fake = Faker()
 
 # --- I. CANONICAL DATA STRUCTURES ---
 
+VALID_CATEGORIES = {
+    "Income": ["Gig Income", "Payroll", "Other Income", "Refund", "Interest Income", "Peer-to-Peer Credit"],
+    "Expense": [
+        "Groceries", "Pharmacy", "Office Supplies", "Food & Dining", "Coffee Shop", "Shopping", "Entertainment",
+        "Health & Wellness", "Auto & Transport", "Travel & Vacation", "Loan Payment", "Rent Payment",
+        "Software & Tech", "Medical", "Insurance", "Bills & Utilities", "ATM Withdrawal",
+        "Fees & Charges", "Business Services", "Other Expense", "Mortgage Payment", "Streaming Services",
+        "Peer-to-Peer Debit" # MODIFICATION: Added new category
+    ]
+}
+
 INSTITUTION_NAMES = ["Capital One", "Chase", "Ally Bank", "Bank of America"]
 ACCOUNT_TYPES = ["Credit Card", "Checking Account", "Savings Account"]
 CHANNELS = ["ATM", "Point-of-Sale", "Card-Not-Present", "Wire Transfer", "ACH", "Check", "P2P", "Internal Transfer"]
 
 EXPENSE_TAXONOMY = [
-    {"primary_category": "Expense", "secondary_category": "Groceries", "tier": "Premium", "merchant": "Whole Foods Market", "channel": "Point-of-Sale"},
-    {"primary_category": "Expense", "secondary_category": "Groceries", "tier": "Mid-Range", "merchant": "Trader Joe's", "channel": "Point-of-Sale"},
-    {"primary_category": "Expense", "secondary_category": "Food & Dining", "tier": "Premium", "merchant": "Blue Bottle Coffee", "channel": "Point-of-Sale"},
-    {"primary_category": "Expense", "secondary_category": "Food & Dining", "tier": "Mid-Range", "merchant": "Chipotle", "channel": "Point-of-Sale"},
-    {"primary_category": "Expense", "secondary_category": "Shopping", "tier": "Mid-Range", "merchant": "Amazon.com", "channel": "Card-Not-Present"},
-    {"primary_category": "Expense", "secondary_category": "Shopping", "tier": "Premium", "merchant": "Lululemon", "channel": "Card-Not-Present"},
-    {"primary_category": "Expense", "secondary_category": "Entertainment", "tier": "Mid-Range", "merchant": "Netflix.com", "channel": "Card-Not-Present"},
-    {"primary_category": "Expense", "secondary_category": "Entertainment", "tier": "Mid-Range", "merchant": "Spotify", "channel": "Card-Not-Present"},
-    {"primary_category": "Expense", "secondary_category": "Health & Wellness", "tier": "Mid-Range", "merchant": "CVS Pharmacy", "channel": "Point-of-Sale"},
-    {"primary_category": "Expense", "secondary_category": "Health & Wellness", "tier": "Premium", "merchant": "SilverSneakers Fitness", "channel": "ACH"},
-    {"primary_category": "Expense", "secondary_category": "Auto & Transport", "tier": "Mid-Range", "merchant": "Uber", "channel": "Card-Not-Present"},
-    {"primary_category": "Expense", "secondary_category": "Travel & Vacation", "tier": "Mid-Range", "merchant": "Expedia", "channel": "Card-Not-Present"},
-    {"primary_category": "Expense", "secondary_category": "Travel & Vacation", "tier": "Premium", "merchant": "Carnival Cruise Line", "channel": "Card-Not-Present"},
-    {"primary_category": "Expense", "secondary_category": "Auto & Transport", "tier": "Mid-Range", "merchant": "Shell Gas Station", "channel": "Point-of-Sale"},
-    {"primary_category": "Expense", "secondary_category": "Software & Tech", "tier": "Premium", "merchant": "ADOBE INC", "channel": "Card-Not-Present"},
-    {"primary_category": "Expense", "secondary_category": "Shopping", "tier": "Mid-Range", "merchant": "Staples", "channel": "Point-of-Sale"},
-    {"primary_category": "Expense", "secondary_category": "Shopping", "tier": "Mid-Range", "merchant": "Home Depot", "channel": "Point-of-Sale"},
-    {"primary_category": "Expense", "secondary_category": "Education", "tier": "Premium", "merchant": "University Bookstore", "channel": "Point-of-Sale"},
-    {"primary_category": "Expense", "secondary_category": "Medical", "tier": "Premium", "merchant": "City Hospital", "channel": "ACH"},
-    {"primary_category": "Expense", "secondary_category": "Insurance", "tier": "Mid-Range", "merchant": "GEICO", "channel": "ACH"},
-    {"primary_category": "Expense", "secondary_category": "Bills & Utilities", "tier": "Mid-Range", "merchant": "T-MOBILE", "channel": "ACH"},
-    {"primary_category": "Expense", "secondary_category": "Fees & Charges", "tier": "Mid-Range", "merchant": "AARP", "channel": "ACH"},
-]
-
-INCOME_CATEGORIES = [
-    {"secondary_category": "Income", "description_template": "{merchant} DEPOSIT PMT_{id}"},
-    {"secondary_category": "Interest Income", "description_template": "{bank} INTEREST PAYMENT"},
-    {"secondary_category": "Refund", "description_template": "REFUND FROM {merchant}"},
-    {"secondary_category": "Other Income", "description_template": "MISC Credit {origin}"},
+    {"secondary_category": "Groceries", "merchant": "Whole Foods Market", "channel": "Point-of-Sale"},
+    {"secondary_category": "Groceries", "merchant": "Trader Joe's", "channel": "Point-of-Sale"},
+    {"secondary_category": "Coffee Shop", "merchant": "Blue Bottle Coffee", "channel": "Point-of-Sale"},
+    {"secondary_category": "Food & Dining", "merchant": "Chipotle", "channel": "Point-of-Sale"},
+    {"secondary_category": "Shopping", "merchant": "Amazon.com", "channel": "Card-Not-Present"},
+    {"secondary_category": "Shopping", "merchant": "Lululemon", "channel": "Card-Not-Present"},
+    {"secondary_category": "Streaming Services", "merchant": "Netflix.com", "channel": "Card-Not-Present"},
+    {"secondary_category": "Streaming Services", "merchant": "Spotify", "channel": "Card-Not-Present"},
+    {"secondary_category": "Pharmacy", "merchant": "CVS Pharmacy", "channel": "Point-of-Sale"},
+    {"secondary_category": "Health & Wellness", "merchant": "SilverSneakers Fitness", "channel": "ACH"},
+    {"secondary_category": "Auto & Transport", "merchant": "Uber", "channel": "Card-Not-Present"},
+    {"secondary_category": "Loan Payment", "merchant": "ALLY FINANCIAL AUTO", "channel": "ACH"},
+    {"secondary_category": "Loan Payment", "merchant": "TESLA MOTORS PMT", "channel": "ACH"},
+    {"secondary_category": "Travel & Vacation", "merchant": "Expedia", "channel": "Card-Not-Present"},
+    {"secondary_category": "Travel & Vacation", "merchant": "Carnival Cruise Line", "channel": "Card-Not-Present"},
+    {"secondary_category": "Auto & Transport", "merchant": "Shell Gas Station", "channel": "Point-of-Sale"},
+    {"secondary_category": "Software & Tech", "merchant": "ADOBE INC", "channel": "Card-Not-Present"},
+    {"secondary_category": "Office Supplies", "merchant": "Staples", "channel": "Point-of-Sale"},
+    {"secondary_category": "Shopping", "merchant": "Home Depot", "channel": "Point-of-Sale"},
+    {"secondary_category": "Shopping", "merchant": "University Bookstore", "channel": "Point-of-Sale"},
+    {"secondary_category": "Medical", "merchant": "City Hospital", "channel": "ACH"},
+    {"secondary_category": "Insurance", "merchant": "GEICO", "channel": "ACH"},
+    {"secondary_category": "Insurance", "merchant": "STATE FARM INS", "channel": "ACH"},
+    {"secondary_category": "Insurance", "merchant": "ALLSTATE HOME & AUTO", "channel": "ACH"},
+    {"secondary_category": "Bills & Utilities", "merchant": "T-MOBILE", "channel": "ACH"},
+    {"secondary_category": "Bills & Utilities", "merchant": "VERIZON FIOS", "channel": "ACH"},
+    {"secondary_category": "Bills & Utilities", "merchant": "AT&T MOBILITY", "channel": "ACH"},
+    {"secondary_category": "Bills & Utilities", "merchant": "CON EDISON UTILITY", "channel": "ACH"},
+    {"secondary_category": "Bills & Utilities", "merchant": "PG&E UTILITIES", "channel": "ACH"},
+    {"secondary_category": "Bills & Utilities", "merchant": "FLORIDA POWER & LIGHT", "channel": "ACH"},
+    {"secondary_category": "Fees & Charges", "merchant": "AARP", "channel": "ACH"},
 ]
 
 MERCHANT_TO_CHANNEL_MAP = {item['merchant']: item['channel'] for item in EXPENSE_TAXONOMY}
@@ -98,7 +112,7 @@ LIFE_EVENT_IMPACT_MATRIX = {
     },
     "Annual Work Bonus": {
         "category": "Positive Financial Shock", "magnitude_range": (2000, 5000), "duration": 2,
-        "primary_signature": {"secondary_category": "Income", "merchant_options": ["ADP PAYROLL BONUS", "COMPANY BONUS DIRECT DEPOSIT"]},
+        "primary_signature": {"secondary_category": "Payroll", "merchant_options": ["ADP PAYROLL BONUS", "COMPANY BONUS DIRECT DEPOSIT"]},
         "secondary_effects_prompt": "Reflect a temporary increase in high-ticket or premium spending (e.g., Travel & Vacation, Shopping) for the next 2 months following the bonus."
     },
 }
@@ -106,56 +120,53 @@ LIFE_EVENT_IMPACT_MATRIX = {
 PERSONAS = [
     {
         "persona_name": "Full-Time Rideshare Driver",
-        "description": "Earns primary income from Uber and Lyft. Co-mingles funds, using the same account for business (gas, maintenance) and personal (food, shopping) expenses.",
-        "income_merchants": ["UBER", "LYFT", "DOORDASH"], "p2p_income_channels": [],
-        "business_expense_categories": ["Auto & Transport"],
-        "spending_tier_affinities": {"Budget": 0.5, "Mid-Range": 0.4, "Premium": 0.1},
+        "income_type": "Gig Income", "income_merchants": ["UBER", "LYFT", "DOORDASH"],
         "recurring_expenses": [
-            {"merchant_name": "GEICO INSURANCE", "day_of_month": 1, "amount_mean": -180.50, "amount_std": 10.0, "primary_category": "Expense", "secondary_category": "Insurance"},
-            {"merchant_name": "T-MOBILE", "day_of_month": 15, "amount_mean": -95.00, "amount_std": 5.0, "primary_category": "Expense", "secondary_category": "Bills & Utilities"},
+            {"merchant_name": "CITY PROPERTY MGMT", "day_of_month": 1, "amount_mean": -1450.00, "amount_std": 25.0, "secondary_category": "Rent Payment"},
+            {"merchant_name": "GEICO", "day_of_month": 1, "amount_mean": -180.50, "amount_std": 10.0, "secondary_category": "Insurance"},
+            {"merchant_name": "ALLY FINANCIAL AUTO", "day_of_month": 10, "amount_mean": -450.00, "amount_std": 0, "secondary_category": "Loan Payment"},
+            {"merchant_name": "T-MOBILE", "day_of_month": 15, "amount_mean": -95.00, "amount_std": 5.0, "secondary_category": "Bills & Utilities"},
         ]
     },
     {
         "persona_name": "Freelance Creative",
-        "description": "A graphic designer who receives client payments via Stripe (for corporate clients) and P2P apps (for individual clients). Pays for business software and personal living costs from one account.",
-        "income_merchants": ["STRIPE"], "p2p_income_channels": ["Zelle", "Cash App", "PayPal"],
-        "business_expense_categories": ["Software & Tech", "Shopping", "Bills & Utilities"],
-        "spending_tier_affinities": {"Budget": 0.1, "Mid-Range": 0.4, "Premium": 0.5},
+        "income_type": "Gig Income", "income_merchants": ["STRIPE", "UPWORK"],
         "recurring_expenses": [
-            {"merchant_name": "ADOBE INC", "day_of_month": 5, "amount_mean": -59.99, "amount_std": 0, "primary_category": "Expense", "secondary_category": "Software & Tech"},
+            {"merchant_name": "EQUITY RESIDENTIAL RENT", "day_of_month": 1, "amount_mean": -1900.00, "amount_std": 0, "secondary_category": "Rent Payment"},
+            {"merchant_name": "ADOBE INC", "day_of_month": 5, "amount_mean": -59.99, "amount_std": 0, "secondary_category": "Software & Tech"},
+            {"merchant_name": "VERIZON FIOS", "day_of_month": 18, "amount_mean": -89.99, "amount_std": 0, "secondary_category": "Bills & Utilities"},
+            {"merchant_name": "CON EDISON UTILITY", "day_of_month": 20, "amount_mean": -120.00, "amount_std": 30.0, "secondary_category": "Bills & Utilities"},
         ]
     },
     {
         "persona_name": "Salaried Tech Professional",
-        "description": "Receives a stable, bi-weekly salary via ADP. Spends on premium groceries, dining out, tech gadgets, and travel. Has consistent, automated savings and bill payments.",
-        "income_merchants": ["ADP", "GOOGLE", "AMAZON WEB SERVICES"], "p2p_income_channels": [],
-        "business_expense_categories": [],
-        "spending_tier_affinities": {"Budget": 0.1, "Mid-Range": 0.3, "Premium": 0.6},
+        "income_type": "Payroll", "income_merchants": ["ADP", "GOOGLE", "AMAZON WEB SERVICES"],
         "recurring_expenses": [
-            {"merchant_name": "NETFLIX.COM", "day_of_month": 10, "amount_mean": -15.49, "amount_std": 0, "primary_category": "Expense", "secondary_category": "Entertainment"},
-            {"merchant_name": "LUXURY APTS RENT", "day_of_month": 1, "amount_mean": -2500.00, "amount_std": 0, "primary_category": "Expense", "secondary_category": "Bills & Utilities"},
+            {"merchant_name": "WELLS FARGO HOME MTG", "day_of_month": 1, "amount_mean": -3200.00, "amount_std": 0, "secondary_category": "Mortgage Payment"},
+            {"merchant_name": "STATE FARM INS", "day_of_month": 1, "amount_mean": -210.00, "amount_std": 15.0, "secondary_category": "Insurance"},
+            {"merchant_name": "TESLA MOTORS PMT", "day_of_month": 5, "amount_mean": -750.00, "amount_std": 0, "secondary_category": "Loan Payment"},
+            {"merchant_name": "Netflix.com", "day_of_month": 10, "amount_mean": -15.49, "amount_std": 0, "secondary_category": "Streaming Services"},
+            {"merchant_name": "PG&E UTILITIES", "day_of_month": 22, "amount_mean": -250.00, "amount_std": 50.0, "secondary_category": "Bills & Utilities"},
         ]
     },
     {
         "persona_name": "University Student",
-        "description": "Receives periodic student loan disbursements and income from a part-time campus job. Spends on textbooks, cheap food, streaming services, and ride-sharing.",
-        "income_merchants": ["UNIVERSITY PAYROLL", "NELNET", "SALLIE MAE"], "p2p_income_channels": ["Venmo"],
-        "business_expense_categories": ["Education"],
-        "spending_tier_affinities": {"Budget": 0.7, "Mid-Range": 0.3, "Premium": 0.0},
+        "income_type": "Payroll", "income_merchants": ["UNIVERSITY PAYROLL", "NELNET", "SALLIE MAE"],
         "recurring_expenses": [
-            {"merchant_name": "Spotify", "day_of_month": 20, "amount_mean": -10.99, "amount_std": 0, "primary_category": "Expense", "secondary_category": "Entertainment"},
-            {"merchant_name": "CAMPUS HOUSING", "day_of_month": 1, "amount_mean": -850.00, "amount_std": 0, "primary_category": "Expense", "secondary_category": "Bills & Utilities"},
+            {"merchant_name": "STATE UNIVERSITY HOUSING", "day_of_month": 1, "amount_mean": -850.00, "amount_std": 0, "secondary_category": "Rent Payment"},
+            {"merchant_name": "AT&T MOBILITY", "day_of_month": 15, "amount_mean": -75.00, "amount_std": 5.0, "secondary_category": "Bills & Utilities"},
+            {"merchant_name": "Spotify", "day_of_month": 20, "amount_mean": -10.99, "amount_std": 0, "secondary_category": "Streaming Services"},
         ]
     },
     {
         "persona_name": "Retiree on Fixed Income",
-        "description": "Receives a monthly pension and Social Security. Spends on healthcare, groceries, home maintenance, and occasional travel like cruises.",
-        "income_merchants": ["US TREASURY 310", "STATE PENSION FUND"], "p2p_income_channels": [],
-        "business_expense_categories": [],
-        "spending_tier_affinities": {"Budget": 0.4, "Mid-Range": 0.5, "Premium": 0.1},
+        "income_type": "Other Income", "income_merchants": ["US TREASURY 310", "STATE PENSION FUND"],
         "recurring_expenses": [
-            {"merchant_name": "SilverSneakers Fitness", "day_of_month": 5, "amount_mean": -25.00, "amount_std": 0, "primary_category": "Expense", "secondary_category": "Health & Wellness"},
-            {"merchant_name": "AARP", "day_of_month": 12, "amount_mean": -16.00, "amount_std": 0, "primary_category": "Expense", "secondary_category": "Fees & Charges"},
+            {"merchant_name": "BANK OF AMERICA MORTGAGE", "day_of_month": 1, "amount_mean": -1850.00, "amount_std": 0, "secondary_category": "Mortgage Payment"},
+            {"merchant_name": "ALLSTATE HOME & AUTO", "day_of_month": 1, "amount_mean": -240.00, "amount_std": 0, "secondary_category": "Insurance"},
+            {"merchant_name": "SilverSneakers Fitness", "day_of_month": 5, "amount_mean": -25.00, "amount_std": 0, "secondary_category": "Health & Wellness"},
+            {"merchant_name": "AARP", "day_of_month": 12, "amount_mean": -16.00, "amount_std": 0, "secondary_category": "Fees & Charges"},
+            {"merchant_name": "FLORIDA POWER & LIGHT", "day_of_month": 18, "amount_mean": -180.00, "amount_std": 45.0, "secondary_category": "Bills & Utilities"},
         ]
     },
 ]
@@ -163,14 +174,23 @@ PERSONAS = [
 # --- II. HYBRID GENERATION & STATISTICAL MODELING ---
 
 AMOUNT_DISTRIBUTIONS = {
+    # Expenses
     "Groceries": {"log_mean": 3.8, "log_std": 0.6}, "Food & Dining": {"log_mean": 2.8, "log_std": 0.8},
-    "Shopping": {"log_mean": 4.2, "log_std": 1.0}, "Entertainment": {"log_mean": 3.2, "log_std": 0.7},
-    "Health & Wellness": {"log_mean": 3.5, "log_std": 0.8}, "Medical": {"log_mean": 4.5, "log_std": 1.1},
+    "Coffee Shop": {"log_mean": 2.0, "log_std": 0.5}, "Shopping": {"log_mean": 4.2, "log_std": 1.0},
+    "Streaming Services": {"log_mean": 2.8, "log_std": 0.3}, "Entertainment": {"log_mean": 3.5, "log_std": 0.8},
+    "Health & Wellness": {"log_mean": 3.5, "log_std": 0.8}, "Pharmacy": {"log_mean": 3.2, "log_std": 0.7},
     "Auto & Transport": {"log_mean": 3.4, "log_std": 0.9}, "Travel & Vacation": {"log_mean": 5.5, "log_std": 0.8},
-    "Education": {"log_mean": 4.8, "log_std": 1.2}, "Fees & Charges": {"log_mean": 2.9, "log_std": 0.5},
-    "Income": {"log_mean": 6.5, "log_std": 0.5}, "Interest Income": {"log_mean": 2.5, "log_std": 0.4},
-    "Refund": {"log_mean": 4.0, "log_std": 0.9}, "Other Income": {"log_mean": 5.0, "log_std": 1.2},
-    "Peer to Peer Transfer": {"log_mean": 4.8, "log_std": 1.0},
+    "Software & Tech": {"log_mean": 4.0, "log_std": 1.0}, "Medical": {"log_mean": 4.5, "log_std": 1.1},
+    "Office Supplies": {"log_mean": 3.7, "log_std": 0.9}, "Fees & Charges": {"log_mean": 2.9, "log_std": 0.5},
+    "Loan Payment": {"log_mean": 6.0, "log_std": 0.2}, "Mortgage Payment": {"log_mean": 7.5, "log_std": 0.2},
+    "Rent Payment": {"log_mean": 7.2, "log_std": 0.3}, "Insurance": {"log_mean": 5.0, "log_std": 0.4},
+    "Bills & Utilities": {"log_mean": 4.5, "log_std": 0.5},
+    "Peer-to-Peer Debit": {"log_mean": 4.8, "log_std": 1.0}, # MODIFICATION: Added distribution
+    # Income
+    "Gig Income": {"log_mean": 6.0, "log_std": 0.8}, "Payroll": {"log_mean": 7.8, "log_std": 0.2},
+    "Interest Income": {"log_mean": 2.5, "log_std": 0.4}, "Refund": {"log_mean": 4.0, "log_std": 0.9},
+    "Other Income": {"log_mean": 5.0, "log_std": 1.2}, "Peer-to-Peer Credit": {"log_mean": 4.8, "log_std": 1.0},
+    # Default
     "Default": {"log_mean": 3.0, "log_std": 1.0}
 }
 
@@ -203,7 +223,7 @@ TRANSACTION_SCHEMA_FOR_LLM = {
             "description_raw": {"type": "string", "description": "The complete, raw transaction line item. MUST include extra details beyond just the merchant name, such as transaction prefixes (SQ*, TST*), store numbers, location, or reference codes."},
             "merchant_name_raw": {"type": "string", "description": "The raw merchant name as extracted from the description (e.g., 'SQ *BLUE BOTTLE COFFEE #B12')."},
             "merchant_name_cleaned": {"type": "string", "description": "The cleaned, canonical merchant name (e.g., 'Blue Bottle Coffee')."},
-            "secondary_category": {"type": "string", "description": "The detailed sub-category of the transaction."}
+            "secondary_category": {"type": "string", "enum": VALID_CATEGORIES["Income"] + VALID_CATEGORIES["Expense"], "description": "The detailed sub-category of the transaction."}
         }, "required": ["description_raw", "merchant_name_raw", "merchant_name_cleaned", "secondary_category"]
     }
 }
@@ -220,35 +240,34 @@ def build_monthly_prompt(profile: Dict, month_date: datetime, transactions_this_
     income_merchant_example = random.choice(persona.get("income_merchants", ["DEPOSIT"]))
     
     # Dynamically list some relevant expense categories for the persona
-    all_categories = list(AMOUNT_DISTRIBUTIONS.keys())
-    persona_categories = persona.get("business_expense_categories", []) + random.sample([c for c in all_categories if "Income" not in c and "Transfer" not in c and c not in persona.get("business_expense_categories", [])], k=4)
+    persona_expense_categories = random.sample(VALID_CATEGORIES["Expense"], k=5)
     
     few_shot_examples = f"""
     **High-Quality Output Examples (for style guidance only):**
     ```json
     [
-        {{"description_raw": "SQ *BLUE BOTTLE COFFEE #B12", "merchant_name_raw": "SQ *BLUE BOTTLE COFFEE", "merchant_name_cleaned": "Blue Bottle Coffee", "secondary_category": "Food & Dining"}},
+        {{"description_raw": "SQ *BLUE BOTTLE COFFEE #B12", "merchant_name_raw": "SQ *BLUE BOTTLE COFFEE", "merchant_name_cleaned": "Blue Bottle Coffee", "secondary_category": "Coffee Shop"}},
         {{"description_raw": "POS Debit TRADER JOE'S #552 PHOENIX AZ", "merchant_name_raw": "TRADER JOE'S #552", "merchant_name_cleaned": "Trader Joe's", "secondary_category": "Groceries"}},
-        {{"description_raw": "TST* The Corner Bistro", "merchant_name_raw": "TST* The Corner Bistro", "merchant_name_cleaned": "The Corner Bistro", "secondary_category": "Food & Dining"}},
         {{"description_raw": "AMAZON.COM*A12B34CD5 AMZN.COM/BILL WA", "merchant_name_raw": "AMAZON.COM*A12B34CD5", "merchant_name_cleaned": "Amazon.com", "secondary_category": "Shopping"}},
         {{"description_raw": "UBER TRIP 6J7K8L HELP.UBER.COM", "merchant_name_raw": "UBER TRIP", "merchant_name_cleaned": "Uber", "secondary_category": "Auto & Transport"}},
-        {{"description_raw": "{income_merchant_example} DEPOSIT PMT_1234", "merchant_name_raw": "{income_merchant_example} DEPOSIT", "merchant_name_cleaned": "{income_merchant_example}", "secondary_category": "Income"}}
+        {{"description_raw": "{income_merchant_example} DEPOSIT PMT_1234", "merchant_name_raw": "{income_merchant_example} DEPOSIT", "merchant_name_cleaned": "{income_merchant_example}", "secondary_category": "{persona['income_type']}"}}
     ]
     ```
     """
     
     return f"""
     Generate a flat JSON array of exactly {transactions_this_month} realistic, variable bank transactions for '{profile["consumer_name"]}' for **{month_name}**.
-    - Persona: '{persona["persona_name"]}' ({persona["description"]})
-    - **Persona Focus:** Generate transactions reflecting spending in categories like: {', '.join(persona_categories)}. Income should primarily come from sources like: {', '.join(persona['income_merchants'])}.
+    - Persona: '{persona["persona_name"]}'.
+    - **Income Focus:** Primary income should be categorized as '{persona['income_type']}' from sources like: {', '.join(persona['income_merchants'])}. Also include other income types like 'Refund' or 'Peer-to-Peer Credit' where appropriate.
+    - **Expense Focus:** Generate transactions reflecting spending in categories like: {', '.join(persona_expense_categories)}. Also include 'Peer-to-Peer Debit' transactions where logical (e.g., paying a friend).
     - **Monthly Narrative:** {narrative_block}
     **CRITICAL INSTRUCTIONS:**
-    1.  **Differentiate Descriptions:** The `description_raw` MUST be more detailed than `merchant_name_raw`. It should contain the merchant name plus other realistic data like store numbers, transaction type prefixes (e.g. 'SQ *', 'POS Debit'), locations, or reference IDs.
-    2.  The `merchant_name_raw` MUST be a logical, consistent part of the `description_raw`.
-    3.  The `merchant_name_cleaned` MUST be the canonical, recognizable name of the business.
-    4.  For income, use `secondary_category`: "Income", "Refund", or "Other Income".
+    1.  **Use Valid Categories:** The `secondary_category` MUST be one of the allowed values.
+    2.  **Differentiate Descriptions:** The `description_raw` MUST be more detailed than `merchant_name_raw`. It should contain the merchant name plus other realistic data like store numbers, transaction type prefixes (e.g. 'SQ *', 'POS Debit'), locations, or reference IDs. For Peer-to-Peer transactions, the merchant name should be a person's name.
+    3.  The `merchant_name_raw` MUST be a logical, consistent part of the `description_raw`.
+    4.  The `merchant_name_cleaned` MUST be the canonical, recognizable name of the business or person.
     5.  Do NOT generate predictable monthly bills; they are handled separately.
-    6.  The entire output MUST be ONLY the raw JSON array, conforming strictly to the provided schema. Ensure all strings are properly escaped.
+    6.  The entire output MUST be ONLY the raw JSON array, conforming strictly to the provided schema.
     {few_shot_examples}
     **Your Task:** Generate the JSON array for **{month_name}**.
     """
@@ -267,26 +286,16 @@ except Exception as e:
     exit()
 
 TRANSACTIONS_SCHEMA = [
-    bigquery.SchemaField("transaction_id", "STRING", mode="REQUIRED", description="Primary Key. A unique identifier for the transaction."),
-    bigquery.SchemaField("account_id", "STRING", mode="REQUIRED", description="Identifier for a specific bank account this transaction belongs to."),
-    bigquery.SchemaField("consumer_name", "STRING", mode="NULLABLE", description="The first and last name of the synthetic consumer."),
-    bigquery.SchemaField("persona_type", "STRING", mode="NULLABLE", description="The generated persona profile for the consumer (e.g., 'Freelance Creative')."),
-    bigquery.SchemaField("institution_name", "STRING", mode="NULLABLE", description="The name of the financial institution (e.g., 'Chase')."),
-    bigquery.SchemaField("account_type", "STRING", mode="NULLABLE", description="The type of account (e.g., 'Checking Account', 'Credit Card')."),
-    bigquery.SchemaField("transaction_date", "TIMESTAMP", mode="NULLABLE", description="The exact date and time the transaction was posted."),
-    bigquery.SchemaField("transaction_type", "STRING", mode="NULLABLE", description="The type of transaction, either 'Debit' or 'Credit'."),
-    bigquery.SchemaField("amount", "FLOAT", mode="NULLABLE", description="The value of the transaction. Negative for debits, positive for credits."),
-    bigquery.SchemaField("is_recurring", "BOOLEAN", mode="NULLABLE", description="A boolean flag (True/False) to indicate if it's a predictable, recurring payment."),
-    bigquery.SchemaField("description_raw", "STRING", mode="NULLABLE", description="The original, unaltered transaction description from the bank statement."),
-    bigquery.SchemaField("description_cleaned", "STRING", mode="NULLABLE", description="A standardized and cleaned version of the raw description (lowercase, no special characters)."),
-    bigquery.SchemaField("merchant_name_raw", "STRING", mode="NULLABLE", description="The raw, potentially messy merchant name as it might appear on a statement."),
-    bigquery.SchemaField("merchant_name_cleaned", "STRING", mode="NULLABLE", description="The cleaned, canonical name of the merchant for analytics."),
-    bigquery.SchemaField("primary_category", "STRING", mode="NULLABLE", description="The high-level category: 'Income', 'Expense', or 'Transfer'."),
-    bigquery.SchemaField("secondary_category", "STRING", mode="NULLABLE", description="The detailed sub-category (e.g., 'Groceries', 'Software & Tech', 'Interest Income')."),
-    bigquery.SchemaField("channel", "STRING", mode="NULLABLE", description="The method or channel of the transaction (e.g., 'Point-of-Sale', 'ACH')."),
-    bigquery.SchemaField("categorization_update_timestamp", "TIMESTAMP", mode="NULLABLE", description="The timestamp when the transaction's categorization was last updated."),
-    bigquery.SchemaField("categorization_method", "STRING", mode="NULLABLE", description="The method for which the transaction's categorization was updated."),
-    bigquery.SchemaField("rule_id", "STRING", mode="NULLABLE", description="Unique identifier for the rule.")
+    bigquery.SchemaField("transaction_id", "STRING", mode="REQUIRED"), bigquery.SchemaField("account_id", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("consumer_name", "STRING"), bigquery.SchemaField("persona_type", "STRING"),
+    bigquery.SchemaField("institution_name", "STRING"), bigquery.SchemaField("account_type", "STRING"),
+    bigquery.SchemaField("transaction_date", "TIMESTAMP"), bigquery.SchemaField("transaction_type", "STRING"),
+    bigquery.SchemaField("amount", "FLOAT"), bigquery.SchemaField("is_recurring", "BOOLEAN"),
+    bigquery.SchemaField("description_raw", "STRING"), bigquery.SchemaField("description_cleaned", "STRING"),
+    bigquery.SchemaField("merchant_name_raw", "STRING"), bigquery.SchemaField("merchant_name_cleaned", "STRING"),
+    bigquery.SchemaField("primary_category", "STRING"), bigquery.SchemaField("secondary_category", "STRING"),
+    bigquery.SchemaField("channel", "STRING"), bigquery.SchemaField("categorization_update_timestamp", "TIMESTAMP"),
+    bigquery.SchemaField("categorization_method", "STRING"), bigquery.SchemaField("rule_id", "STRING")
 ]
 
 @retry_async.AsyncRetry(predicate=retry_async.if_exception_type(exceptions.Aborted, exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.TooManyRequests), initial=1.0, maximum=16.0, multiplier=2.0)
@@ -295,18 +304,10 @@ async def generate_data_with_gemini(prompt: str) -> List[Dict[str, Any]]:
     try:
         generation_config = GenerationConfig(response_mime_type="application/json", response_schema=TRANSACTION_SCHEMA_FOR_LLM, temperature=1.0, max_output_tokens=8192)
         response = await model.generate_content_async(prompt, generation_config=generation_config)
-        
-        # Clean the response before parsing
-        text_response = response.text.strip()
-        if text_response.startswith("```json"):
-            text_response = text_response[7:]
-        if text_response.endswith("```"):
-            text_response = text_response[:-3]
-
+        text_response = response.text.strip().replace("```json", "").replace("```", "")
         return json.loads(text_response)
     except json.JSONDecodeError as e:
-        logging.error(f"Failed to decode JSON from Vertex AI API: {e}")
-        logging.error(f"Raw response: {response.text}")
+        logging.error(f"Failed to decode JSON from Vertex AI API: {e}. Raw response: {response.text}")
         return []
     except Exception as e:
         logging.error(f"An unexpected error occurred with the Vertex AI API: {e}")
@@ -316,60 +317,35 @@ def setup_bigquery_table():
     full_dataset_id = f"{PROJECT_ID}.{DATASET_ID}"
     dataset = bigquery.Dataset(full_dataset_id)
     dataset.location = LOCATION
-    try:
-        bq_client.create_dataset(dataset, exists_ok=True)
-        logging.info(f"Dataset '{full_dataset_id}' is ready.")
-    except Exception as e:
-        logging.error(f"Failed to create or verify dataset: {e}")
-        exit()
+    bq_client.create_dataset(dataset, exists_ok=True)
+    logging.info(f"Dataset '{full_dataset_id}' is ready.")
     table_ref = bq_client.dataset(DATASET_ID).table(TABLE_ID)
-    try:
-        bq_client.delete_table(table_ref, not_found_ok=True)
-        logging.info(f"Ensured old table '{TABLE_ID}' is removed.")
-    except Exception as e:
-        logging.error(f"Error during table cleanup: {e}")
+    bq_client.delete_table(table_ref, not_found_ok=True)
+    logging.info(f"Ensured old table '{TABLE_ID}' is removed.")
     table = bigquery.Table(table_ref, schema=TRANSACTIONS_SCHEMA)
+    bq_client.create_table(table)
+    logging.info(f"Sent request to create table '{TABLE_ID}'.")
+    time.sleep(5) # Give BQ time to create the table
     try:
-        bq_client.create_table(table)
-        logging.info(f"Sent request to create table '{TABLE_ID}'.")
-        time.sleep(5)
-    except Exception as e:
-        logging.error(f"Failed to send create table request: {e}")
+        bq_client.get_table(table_ref)
+        logging.info(f"✅ Table '{TABLE_ID}' successfully verified and is ready.")
+    except exceptions.NotFound:
+        logging.error("Fatal: Failed to verify table creation. Aborting.")
         exit()
-    max_retries = 10
-    retry_delay = 5
-    for i in range(max_retries):
-        try:
-            bq_client.get_table(table_ref)
-            logging.info(f"✅ Table '{TABLE_ID}' successfully verified and is ready.")
-            return
-        except exceptions.NotFound:
-            if i < max_retries - 1:
-                logging.warning(f"Table not found yet, retrying in {retry_delay}s... (Attempt {i+2}/{max_retries})")
-                time.sleep(retry_delay)
-            else:
-                logging.error("Fatal: Failed to verify table creation after multiple retries. Aborting.")
-                exit()
 
 def upload_to_bigquery(data: List[Dict[str, Any]]):
-    if not data:
-        logging.warning("No data to upload.")
-        return
+    if not data: return
     table_id = f"{PROJECT_ID}.{DATASET_ID}.{TABLE_ID}"
-    job_config = bigquery.LoadJobConfig(
-        schema=TRANSACTIONS_SCHEMA,
-        write_disposition="WRITE_APPEND",
-    )
+    job_config = bigquery.LoadJobConfig(schema=TRANSACTIONS_SCHEMA, write_disposition="WRITE_APPEND")
     try:
         logging.info(f"Starting BigQuery Load Job to insert {len(data)} rows into {table_id}...")
         load_job = bq_client.load_table_from_json(data, table_id, job_config=job_config)
         load_job.result()
         logging.info(f"✅ Success! Load Job complete. Loaded {len(data)} rows.")
     except Exception as e:
-        logging.error(f"An unexpected exception occurred during the BigQuery Load Job: {e}")
+        logging.error(f"BigQuery Load Job failed: {e}")
         if 'load_job' in locals() and load_job.errors:
-            for error in load_job.errors:
-                logging.error(f"  - BQ Error: {error['message']}")
+            for error in load_job.errors: logging.error(f"  - BQ Error: {error['message']}")
         raise
 
 # --- V. PROGRAMMATIC & HYBRID TRANSACTION LOGIC ---
@@ -388,6 +364,7 @@ def generate_life_events(history_months: int) -> List[Dict[str, Any]]:
             events.append({"name": event_name, "details": details, "magnitude": round(random.uniform(*details['magnitude_range']), 2), "start_month_ago": potential_start, "end_month_ago": potential_start - details['duration']})
     return events
 
+
 def inject_recurring_transactions(profile: Dict, history_months: int) -> List[Dict[str, Any]]:
     persona = profile['persona']
     accounts = profile['accounts']
@@ -396,8 +373,9 @@ def inject_recurring_transactions(profile: Dict, history_months: int) -> List[Di
     for bill in persona.get('recurring_expenses', []):
         for i in range(history_months):
             base_date = datetime.now(timezone.utc) - relativedelta(months=i)
-            day = min(bill['day_of_month'], (base_date.replace(day=28) + timedelta(days=4)).day)
-            date = base_date.replace(day=day, hour=random.randint(9, 17), minute=random.randint(0, 59))
+            last_day_of_month = (base_date.replace(day=28) + timedelta(days=4)).day
+            day_to_use = min(bill['day_of_month'], last_day_of_month)
+            date = base_date.replace(day=day_to_use, hour=random.randint(9, 17), minute=random.randint(0, 59))
             amount = round(random.gauss(bill['amount_mean'], bill['amount_std']), 2)
             raw_desc = f"ACH Debit - {bill['merchant_name']}"
             txns.append({
@@ -407,7 +385,7 @@ def inject_recurring_transactions(profile: Dict, history_months: int) -> List[Di
                 "transaction_date": date.isoformat(), "transaction_type": "Debit", "amount": amount, "is_recurring": True,
                 "description_raw": raw_desc, "description_cleaned": clean_description(raw_desc),
                 "merchant_name_raw": bill['merchant_name'], "merchant_name_cleaned": bill['merchant_name'],
-                "primary_category": bill['primary_category'], "secondary_category": bill['secondary_category'], "channel": "ACH",
+                "primary_category": "Expense", "secondary_category": bill['secondary_category'], "channel": "ACH",
                 "categorization_update_timestamp": datetime.now(timezone.utc).isoformat(),
             })
     return txns
@@ -443,11 +421,6 @@ async def generate_cohesive_txns_for_consumer(profile: Dict, history_months: int
     final_txns = inject_recurring_transactions(profile, history_months)
     final_txns.extend(inject_programmatic_event_transactions(profile, life_events))
     
-    cat_lookup = {item['secondary_category']: "Expense" for item in EXPENSE_TAXONOMY}
-    for inc_cat in INCOME_CATEGORIES:
-        cat_lookup[inc_cat['secondary_category']] = "Income"
-    cat_lookup.update({"Peer to Peer Transfer": "Transfer"})
-
     for i in range(history_months):
         month_date = datetime.now(timezone.utc) - relativedelta(months=i)
         active_event = next((e for e in life_events if e['end_month_ago'] < i <= e['start_month_ago']), None)
@@ -458,50 +431,36 @@ async def generate_cohesive_txns_for_consumer(profile: Dict, history_months: int
         
         for txn in monthly_txns_from_llm:
             try:
-                # Get initial data from the LLM response
                 cat_l2 = txn['secondary_category']
-                merchant_raw = txn['merchant_name_raw']
-                merchant_cleaned = txn['merchant_name_cleaned']
+                is_credit = cat_l2 in VALID_CATEGORIES["Income"]
                 
-                # Programmatically determine financial details
                 amount = generate_realistic_amount(cat_l2)
-                is_credit = cat_lookup.get(cat_l2) == "Income" or cat_l2 == "Peer to Peer Transfer"
                 
                 if is_credit:
                     account_type = "Checking Account"
                     transaction_type = "Credit"
                     final_amount = abs(amount)
-                    channel = "ACH"
-                    if cat_l2 == "Peer to Peer Transfer":
-                        p2p_name = fake.name()
-                        merchant_raw = p2p_name
-                        merchant_cleaned = p2p_name
-                        channel = "P2P"
+                    channel = "P2P" if cat_l2 == "Peer-to-Peer Credit" else "ACH"
                 else: # Is Expense
                     account_type = random.choice([acc for acc in profile['accounts'].keys() if acc != "Savings Account"])
                     transaction_type = "Debit"
                     final_amount = -abs(amount)
-                    # Use the cleaned merchant name for reliable channel lookup
-                    channel = MERCHANT_TO_CHANNEL_MAP.get(merchant_cleaned, "Card-Not-Present")
+                    # MODIFICATION: Assign correct channel for P2P Debit
+                    if cat_l2 == "Peer-to-Peer Debit":
+                        channel = "P2P"
+                    else:
+                        channel = MERCHANT_TO_CHANNEL_MAP.get(txn['merchant_name_cleaned'], "Card-Not-Present")
                 
                 account = profile['accounts'][account_type]
                 
-                # Consolidate all fields and add to the original dictionary from the LLM
                 txn.update({
-                    "transaction_id": f"TXN-{uuid.uuid4()}",
-                    "account_id": account['account_id'],
-                    "consumer_name": profile['consumer_name'],
-                    "persona_type": profile['persona']['persona_name'],
-                    "institution_name": account['institution_name'],
-                    "account_type": account_type,
+                    "transaction_id": f"TXN-{uuid.uuid4()}", "account_id": account['account_id'],
+                    "consumer_name": profile['consumer_name'], "persona_type": profile['persona']['persona_name'],
+                    "institution_name": account['institution_name'], "account_type": account_type,
                     "transaction_date": generate_realistic_timestamp(month_date.replace(day=random.randint(1, 28))).isoformat(),
-                    "transaction_type": transaction_type,
-                    "amount": final_amount,
-                    "is_recurring": False,
+                    "transaction_type": transaction_type, "amount": final_amount, "is_recurring": False,
                     "description_cleaned": clean_description(txn.get('description_raw')),
-                    "merchant_name_raw": merchant_raw,
-                    "merchant_name_cleaned": merchant_cleaned,
-                    "primary_category": cat_lookup.get(cat_l2, "Expense"),
+                    "primary_category": "Income" if is_credit else "Expense",
                     "channel": channel,
                     "categorization_update_timestamp": datetime.now(timezone.utc).isoformat(),
                 })
@@ -512,29 +471,20 @@ async def generate_cohesive_txns_for_consumer(profile: Dict, history_months: int
 
 
 # --- VI. MAIN ORCHESTRATION ---
-async def generate_gig_worker_transactions_main(num_consumers: int, min_txns_monthly: int, max_txns_monthly: int, history_months: int, concurrent_jobs: int):
+async def generate_transactions_main(num_consumers: int, min_txns_monthly: int, max_txns_monthly: int, history_months: int, concurrent_jobs: int):
     logging.info(f"--- Starting High-Fidelity Synthetic Data Generation for {num_consumers} Consumers ---")
     setup_bigquery_table()
     
-    # 1. Create a shuffled list of personas to pull from
     shuffled_personas = random.sample(PERSONAS, len(PERSONAS))
-    num_unique_personas = len(shuffled_personas)
-
     consumer_profiles = []
-    # Use an enumerator 'i' for indexing
     for i in range(num_consumers):
-        consumer_name = fake.name()
-        institutions_for_consumer = random.sample(INSTITUTION_NAMES, k=min(len(INSTITUTION_NAMES), 2))
-        
-        # 2. Assign a persona by cycling through the shuffled list
-        persona_to_assign = shuffled_personas[i % num_unique_personas]
-        
+        institutions = random.sample(INSTITUTION_NAMES, k=min(len(INSTITUTION_NAMES), 2))
         profile = {
-            "consumer_name": consumer_name,
-            "persona": persona_to_assign, # Use the assigned persona
+            "consumer_name": fake.name(),
+            "persona": shuffled_personas[i % len(shuffled_personas)],
             "accounts": {
-                "Checking Account": {"account_id": f"ACC-{str(uuid.uuid4())[:12].upper()}", "institution_name": institutions_for_consumer[0]},
-                "Credit Card": {"account_id": f"ACC-{str(uuid.uuid4())[:12].upper()}", "institution_name": institutions_for_consumer[1]},
+                "Checking Account": {"account_id": f"ACC-{str(uuid.uuid4())[:12].upper()}", "institution_name": institutions[0]},
+                "Credit Card": {"account_id": f"ACC-{str(uuid.uuid4())[:12].upper()}", "institution_name": institutions[1]},
             }
         }
         consumer_profiles.append(profile)
@@ -562,12 +512,12 @@ async def generate_gig_worker_transactions_main(num_consumers: int, min_txns_mon
 
 if __name__ == "__main__":
     try:
-        asyncio.run(generate_gig_worker_transactions_main(
+        asyncio.run(generate_transactions_main(
             num_consumers=NUM_CONSUMERS_TO_GENERATE,
             min_txns_monthly=MIN_VARIABLE_TRANSACTIONS_PER_MONTH,
             max_txns_monthly=MAX_VARIABLE_TRANSACTIONS_PER_MONTH,
             history_months=TRANSACTION_HISTORY_MONTHS,
             concurrent_jobs=CONCURRENT_CONSUMER_JOBS
         ))
-    except (RuntimeError, Exception) as e:
+    except Exception as e:
         logging.error(f"The script failed to complete due to an error: {e}")
