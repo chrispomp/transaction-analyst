@@ -1,11 +1,11 @@
 from google.cloud import bigquery
 from typing import Literal
 
-def reset_all_transactions(confirmation: Literal["CONFIRM reset"] | None = None) -> str:
+def reset_all_transactions(confirmation: Literal["CONFIRM"] | None = None) -> str:
     """
     Resets all processing-derived fields in the transactions table back to NULL.
     This is a destructive operation that requires explicit confirmation.
-    To proceed, you must pass the exact string "CONFIRM reset" to this tool.
+    To proceed, you must pass the exact string "CONFIRM" to this tool.
     """
     if confirmation != "CONFIRM":
         return ('🤔 **Confirmation Needed**: To reset all processed transaction data, '

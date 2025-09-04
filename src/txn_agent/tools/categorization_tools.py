@@ -108,8 +108,9 @@ def run_categorization() -> str:
         **Instructions:**
         1.  For each transaction object, determine the correct `primary_category` and `secondary_category`.
         2.  You **MUST** use only the categories provided in the "Valid Categories" section below.
-        3.  Your final output **MUST** be a valid JSON array of objects.
-        4.  Each object in the array **MUST** contain three keys: `transaction_id`, `primary_category`, and `secondary_category`. All values must be strings.
+        3.  Avoid using 'Other Expense' if a more specific category is available.
+        4.  Your final output **MUST** be a valid JSON array of objects.
+        5.  Each object in the array **MUST** contain three keys: `transaction_id`, `primary_category`, and `secondary_category`. All values must be strings.
         **Valid Categories:**
         ```json
         {json.dumps(VALID_CATEGORIES, indent=4)}

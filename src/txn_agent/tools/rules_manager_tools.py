@@ -21,6 +21,9 @@ def create_rule(primary_category: str, secondary_category: str, identifier: str,
     client = bigquery.Client()
 
     # Validation checks
+    if secondary_category in ['Other Expense', 'Other Income']:
+        return "⚠️ **Invalid Category**: Rules cannot be created for 'Other Expense' or 'Other Income' as they should be a last resort."
+
     if primary_category not in VALID_CATEGORIES or secondary_category not in VALID_CATEGORIES.get(primary_category, []):
         logger.warning(f"Invalid category specified: {primary_category}/{secondary_category}")
         return f"⚠️ **Invalid Category**: `{primary_category}/{secondary_category}` is not a valid category combination. Please choose from the available categories."
@@ -171,6 +174,7 @@ def suggest_new_rules() -> str:
         AND pr.identifier_type = r.identifier_type
         AND pr.transaction_type = r.transaction_type
     )
+    AND pr.secondary_category NOT IN ('Other Expense', 'Other Income')
     ORDER BY pr.transaction_count DESC
     LIMIT 10;
     """
