@@ -16,7 +16,7 @@ from src.txn_agent.agents.root import root_agent
 # Tracing is enabled as specified in the TDD for monitoring and debugging.
 app = reasoning_engines.AdkApp(
     agent=root_agent,
-    enable_tracing=True
+    enable_tracing=False
 )
 
 # --- 2. Deployment Logic ---
