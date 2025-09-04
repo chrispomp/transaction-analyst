@@ -1,30 +1,33 @@
 # src/txn_agent/tools/analyst_tools.py
 
-from datetime import datetime, timedelta
-from typing import Tuple
+from google.cloud import bigquery
+from typing import Literal
 
-def calculate_date_range(date_range_str: str) -> str:
+def execute_sql(query: str) -> str:
     """
-    Calculates the start and end dates based on a relative timeframe string
-    (e.g., 'Last 3 months'). The agent should use this to set the
-    start_date and end_date in its session state.
-
-    Args:
-        date_range_str: A string like 'Last 3 months', 'Last 6 months', or 'Last 12 months'.
-
-    Returns:
-        A string containing the start and end dates in 'YYYY-MM-DD' format,
-        formatted as 'start_date:YYYY-MM-DD, end_date:YYYY-MM-DD'.
+    Executes a read-only SQL query against the BigQuery database and returns the results
+    in a markdown table.
     """
-    end_date = datetime.now()
-    if "3 months" in date_range_str:
-        start_date = end_date - timedelta(days=90)
-    elif "6 months" in date_range_str:
-        start_date = end_date - timedelta(days=180)
-    elif "12 months" in date_range_str:
-        start_date = end_date - timedelta(days=365)
-    else:
-        # Default to the last 90 days if the format is unrecognized
-        start_date = end_date - timedelta(days=90)
+    client = bigquery.Client()
+    try:
+        query_job = client.query(query)
+        results = query_job.to_dataframe()
+        return results.to_markdown()
+    except Exception as e:
+        return f"🚨 **Query Failed**: {e}"
+
+def execute_confirmed_update(query: str, confirmation: Literal["CONFIRM"]) -> str:
+    """
+    Executes a data-modifying SQL query (INSERT, UPDATE, DELETE) after explicit
+    user confirmation.
+    """
+    if confirmation != "CONFIRM":
+        return "⚠️ **Confirmation Required**: To execute this query, please provide 'CONFIRM'."
     
-    return f"start_date:{start_date.strftime('%Y-%m-%d')}, end_date:{end_date.strftime('%Y-%m-%d')}"
+    client = bigquery.Client()
+    try:
+        query_job = client.query(query)
+        query_job.result()  # Wait for the job to complete
+        return f"✅ **Success!** The query was executed and affected {query_job.num_dml_affected_rows} rows."
+    except Exception as e:
+        return f"🚨 **Update Failed**: {e}"
