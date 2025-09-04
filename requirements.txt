@@ -1,9 +1,10 @@
 google-adk
 google-cloud-bigquery
 google-cloud-bigquery-storage
-google-cloud-aiplatform
+google-cloud-aiplatform[adk,agent_engines]
 google-auth
 pytest
 pandas
 db-dtypes
 tabulate
+python-dateutil

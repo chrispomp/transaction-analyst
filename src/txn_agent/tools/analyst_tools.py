@@ -4,23 +4,74 @@ from google.cloud import bigquery
 import pandas as pd
 from typing import Literal
 
-# --- CONTEXT & LISTING TOOLS ---
+# --- STATE MANAGEMENT & CONTEXT ---
+
+def get_analysis_context(
+    analysis_level: str = None,
+    context_value: str = None,
+    date_range: str = None
+) -> str:
+    """
+    Manages the conversation flow by checking the analysis state and prompting for the next required piece of information.
+    """
+    if not analysis_level:
+        return (
+            "Please choose an analysis level:\n"
+            "1. 👤 **Consumer Level**: Analyze a single individual.\n"
+            "2. 👥 **Persona Level**: Analyze an aggregate group (e.g., 'Freelance Creative').\n"
+            "3. 🌐 **All Data**: Analyze the entire dataset."
+        )
+
+    if not context_value:
+        if analysis_level == "Consumer Level":
+            return get_distinct_values("consumer_name")
+        elif analysis_level == "Persona Level":
+            return get_distinct_values("persona_type")
+        elif analysis_level == "All Data":
+            context_value = "All Data" # Automatically set for this level
+
+    if not date_range:
+        return "Please provide the time period you'd like to analyze (e.g., Last 3 months, Last 6 months, Last 12 months)."
+
+    # If all context is available, return the main menu for the selected analysis level
+    return get_user_selections(analysis_level)
+
+
+def get_user_selections(analysis_level: str) -> str:
+    """
+    Returns the appropriate menu of analysis options based on the analysis level.
+    """
+    if analysis_level == "Consumer Level":
+        return (
+            "What would you like to see?\n"
+            "1. 📄 **Full Financial Profile**: A comprehensive overview of the consumer's financial health.\n"
+            "2. 💰 **Income Analysis**: A detailed breakdown of all income sources.\n"
+            "3. 📊 **Income Stability Report**: An analysis of income volatility over time.\n"
+            "4. 🛍️ **Spending Habits**: A look at the top spending categories and merchants.\n"
+            "5. 🌊 **Cash Flow Analysis**: A month-by-month view of income vs. spending."
+        )
+    elif analysis_level == "Persona Level":
+        return (
+            "What would you like to see?\n"
+            "1.  snapshot **Persona Financial Snapshot**: A high-level summary of the persona's financial metrics.\n"
+            "2. 💸 **Average Income Analysis**: An exploration of the persona's typical income sources.\n"
+            "3. 📈 **Persona Income Stability Trends**: A report on the income volatility for the persona.\n"
+            "4. 🛒 **Common Spending Patterns**: An analysis of the most frequent spending areas for the persona."
+        )
+    elif analysis_level == "All Data":
+        return (
+            "What would you like to see?\n"
+            "1. ⚙️ **Overall System Health**: A report on data quality and categorization coverage.\n"
+            "2. 🔬 **Persona Comparison Report**: A comparative analysis of different personas."
+        )
+
 
 def get_distinct_values(field: Literal["consumer_name", "persona_type"]) -> str:
     """
-    Retrieves a distinct list of values for a specified field ('consumer_name' or 'persona_type')
-    from the transactions table to be presented to the user as a numbered list.
+    Retrieves a distinct list of values for a specified field.
     """
     client = bigquery.Client()
-    if field not in ["consumer_name", "persona_type"]:
-        return "🚨 **Invalid Field**: Can only get distinct values for 'consumer_name' or 'persona_type'."
-    
-    query = f"""
-    SELECT DISTINCT {field}
-    FROM `fsi-banking-agentspace.txns.transactions`
-    WHERE {field} IS NOT NULL
-    ORDER BY {field};
-    """
+    query = f"SELECT DISTINCT {field} FROM `fsi-banking-agentspace.txns.transactions` WHERE {field} IS NOT NULL ORDER BY {field};"
     try:
         results = client.query(query).to_dataframe()
         if results.empty:
@@ -31,6 +82,7 @@ def get_distinct_values(field: Literal["consumer_name", "persona_type"]) -> str:
     except Exception as e:
         return f"🚨 **Query Failed**: {e}"
 
+
 # --- CONSUMER LEVEL TOOLS ---
 
 def get_consumer_financial_profile(consumer_name: str, start_date: str, end_date: str) -> str:
@@ -39,9 +91,11 @@ def get_consumer_financial_profile(consumer_name: str, start_date: str, end_date
     spending, and stability analysis.
     """
     income_summary = summarize_income_by_source(consumer_name, start_date, end_date)
+    spending_summary = get_spending_habits(consumer_name, start_date, end_date)
     stability = calculate_income_stability(consumer_name, start_date, end_date)
-    # In a real scenario, you would also call a spending analysis tool here.
-    return f"**Financial Profile for {consumer_name}:**\n\n{income_summary}\n\n{stability}"
+    cash_flow = get_cash_flow_analysis(consumer_name, start_date, end_date)
+
+    return f"**Financial Profile for {consumer_name}:**\n\n{income_summary}\n\n{spending_summary}\n\n{stability}\n\n{cash_flow}"
 
 
 def summarize_income_by_source(consumer_name: str, start_date: str, end_date: str) -> str:
@@ -113,6 +167,57 @@ def calculate_income_stability(consumer_name: str, start_date: str, end_date: st
         return f"🚨 **Query Failed**: {e}"
 
 
+def get_spending_habits(consumer_name: str, start_date: str, end_date: str) -> str:
+    """
+    Analyzes a consumer's spending habits by category and merchant.
+    """
+    client = bigquery.Client()
+    query = f"""
+    SELECT
+        secondary_category,
+        SUM(ABS(amount)) as total_spent,
+        COUNT(*) as transaction_count
+    FROM `fsi-banking-agentspace.txns.transactions`
+    WHERE consumer_name = '{consumer_name}'
+      AND transaction_type = 'Debit'
+      AND transaction_date BETWEEN '{start_date}' AND '{end_date}'
+    GROUP BY 1
+    ORDER BY total_spent DESC
+    LIMIT 10;
+    """
+    try:
+        results = client.query(query).to_dataframe()
+        if results.empty:
+            return "No spending data available."
+        return f"**Top Spending Categories:**\n{results.to_markdown(index=False)}"
+    except Exception as e:
+        return f"🚨 **Query Failed**: {e}"
+
+
+def get_cash_flow_analysis(consumer_name: str, start_date: str, end_date: str) -> str:
+    """
+    Provides a month-by-month breakdown of income vs. spending.
+    """
+    client = bigquery.Client()
+    query = f"""
+    SELECT
+        TIMESTAMP_TRUNC(transaction_date, MONTH) as month,
+        SUM(CASE WHEN transaction_type = 'Credit' THEN amount ELSE 0 END) as total_income,
+        SUM(CASE WHEN transaction_type = 'Debit' THEN ABS(amount) ELSE 0 END) as total_spending
+    FROM `fsi-banking-agentspace.txns.transactions`
+    WHERE consumer_name = '{consumer_name}'
+      AND transaction_date BETWEEN '{start_date}' AND '{end_date}'
+    GROUP BY 1
+    ORDER BY 1;
+    """
+    try:
+        results = client.query(query).to_dataframe()
+        if results.empty:
+            return "No data for cash flow analysis."
+        return f"**Cash Flow Analysis:**\n{results.to_markdown(index=False)}"
+    except Exception as e:
+        return f"🚨 **Query Failed**: {e}"
+
 # --- PERSONA LEVEL TOOLS ---
 
 def get_persona_financial_snapshot(persona_type: str, start_date: str, end_date: str) -> str:
@@ -149,6 +254,34 @@ def get_persona_financial_snapshot(persona_type: str, start_date: str, end_date:
         return f"🚨 **Query Failed**: {e}"
 
 
+def get_persona_spending_patterns(persona_type: str, start_date: str, end_date: str) -> str:
+    """
+    Analyzes the most common spending categories for a given persona.
+    """
+    client = bigquery.Client()
+    query = f"""
+    SELECT
+        secondary_category,
+        SUM(ABS(amount)) as total_spent,
+        COUNT(*) as transaction_count,
+        COUNT(DISTINCT consumer_name) as num_consumers
+    FROM `fsi-banking-agentspace.txns.transactions`
+    WHERE persona_type = '{persona_type}'
+      AND transaction_type = 'Debit'
+      AND transaction_date BETWEEN '{start_date}' AND '{end_date}'
+    GROUP BY 1
+    ORDER BY total_spent DESC
+    LIMIT 10;
+    """
+    try:
+        results = client.query(query).to_dataframe()
+        if results.empty:
+            return "No spending data available for this persona."
+        return f"**Common Spending Patterns for {persona_type}:**\n{results.to_markdown(index=False)}"
+    except Exception as e:
+        return f"🚨 **Query Failed**: {e}"
+
+
 # --- ALL DATA LEVEL TOOLS ---
 
 def get_system_health_report() -> str:
@@ -169,5 +302,42 @@ def get_system_health_report() -> str:
     try:
         results = client.query(query).to_dataframe()
         return f"**System Health Report:**\n{results.to_markdown(index=False)}"
+    except Exception as e:
+        return f"🚨 **Query Failed**: {e}"
+
+
+def compare_personas(start_date: str, end_date: str) -> str:
+    """
+    Compares key financial metrics across all available personas.
+    """
+    client = bigquery.Client()
+    query = f"""
+    WITH PersonaMonthlyStats AS (
+      SELECT
+        persona_type,
+        TIMESTAMP_TRUNC(transaction_date, MONTH) as transaction_month,
+        consumer_name,
+        SUM(CASE WHEN transaction_type = 'Credit' THEN amount ELSE 0 END) as monthly_income,
+        SUM(CASE WHEN transaction_type = 'Debit' THEN ABS(amount) ELSE 0 END) as monthly_spending
+      FROM `fsi-banking-agentspace.txns.transactions`
+      WHERE persona_type IS NOT NULL
+      AND transaction_date BETWEEN '{start_date}' AND '{end_date}'
+      GROUP BY 1, 2, 3
+    )
+    SELECT
+      persona_type,
+      AVG(monthly_income) as avg_monthly_income,
+      AVG(monthly_spending) as avg_monthly_spending,
+      STDDEV(monthly_income) as income_volatility,
+      COUNT(DISTINCT consumer_name) as num_consumers
+    FROM PersonaMonthlyStats
+    GROUP BY 1
+    ORDER BY avg_monthly_income DESC;
+    """
+    try:
+        results = client.query(query).to_dataframe()
+        if results.empty:
+            return "Not enough data to compare personas."
+        return f"**Persona Comparison Report:**\n{results.to_markdown(index=False)}"
     except Exception as e:
         return f"🚨 **Query Failed**: {e}"
